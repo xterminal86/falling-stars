@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class ScreenShake : MonoBehaviour
-{  
+{
   Vector3 _cameraPos = new Vector3(0.0f, 0.0f, -10.0f);
 
   IEnumerator ShakeScreenRoutine()
@@ -16,9 +16,9 @@ public class ScreenShake : MonoBehaviour
 
       _cameraPos.x = dx;
       _cameraPos.y = dy;
-      
+
       Camera.main.transform.position = _cameraPos;
-        
+
       secondsPassed += Time.smoothDeltaTime;
 
       yield return null;

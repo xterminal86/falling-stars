@@ -19,7 +19,7 @@ public class Heart : MonoBehaviour
       RectTransform_.anchoredPosition = pos;
 
       c = Image_.color;
-      
+
       c.a -= (Time.smoothDeltaTime * 2.0f);
 
       Image_.color = c;
@@ -38,5 +38,5 @@ public class Heart : MonoBehaviour
       StartCoroutine(FadeRoutine());
       _isRunning = true;
     }
-  }  
+  }
 }

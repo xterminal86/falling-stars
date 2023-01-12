@@ -9,9 +9,9 @@ public class SoundManager : MonoSingleton<SoundManager>
   public float SoundVolume = 1.0f;
   [Range(0.0f, 1.0f)]
   public float MusicVolume = 1.0f;
-    
+
   public AudioSource AudioSourceOneShotPrefab;
-    
+
   [SerializeField]
   public List<AudioClip> MusicTracks = new List<AudioClip>();
   [SerializeField]
@@ -27,7 +27,7 @@ public class SoundManager : MonoSingleton<SoundManager>
 
   AudioSource _musicTrack;
   protected override void Init()
-  {       
+  {
     GameObject go = new GameObject("music-track");
     go.transform.parent = transform;
     _musicTrack = go.AddComponent<AudioSource>();
@@ -39,10 +39,10 @@ public class SoundManager : MonoSingleton<SoundManager>
   }
 
   public void RefreshMediaLists()
-  {    
+  {
     MakeSoundsDatabase();
   }
-    
+
   void MakeSoundsDatabase()
   {
     foreach (var item in SoundEffects)
@@ -222,7 +222,7 @@ public class SoundManager : MonoSingleton<SoundManager>
   {
     _loading = true;
     _stringsIndex = 0;
-        
+
     string filename = string.Format("music/{0}", trackName);
 
     var res = Resources.LoadAsync(filename);

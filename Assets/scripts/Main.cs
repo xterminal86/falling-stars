@@ -13,6 +13,7 @@ public class Main : MonoBehaviour
 
   public GameObject StarPrefab;
   public GameObject MouseClickEffectPrefab;
+  public GameObject ExplosionPrefab;
 
   public Transform ObjectsHolder;
 
@@ -101,6 +102,7 @@ public class Main : MonoBehaviour
     SoundManager.Instance.Initialize();
 
     DifficultyText.text = _difficulty.ToString();
+    ScoreText.text = _score.ToString();
   }
 
   void SpawnStar()
@@ -110,18 +112,18 @@ public class Main : MonoBehaviour
     int starType = Random.Range(0, maxType + 1);
 
     float x = Random.Range(Constants.SpawnX.Key, Constants.SpawnX.Value);
-    float angle = Random.Range(-Constants.StarFallSpreadAngle, 
+    float angle = Random.Range(-Constants.StarFallSpreadAngle,
                                  Constants.StarFallSpreadAngle);
-        
+
     float s = Mathf.Sin(angle * Mathf.Deg2Rad);
     float c = Mathf.Cos(angle * Mathf.Deg2Rad);
 
     //Debug.Log($"angle = { angle }");
     //Debug.Log($"sin = {s} cos = {c}");
-    
+
     Vector2 dir = new Vector2(s, -c);
 
-    GameObject go = Instantiate(StarPrefab,      
+    GameObject go = Instantiate(StarPrefab,
       new Vector3(x, Constants.SpawnY, 0.0f),
       Quaternion.identity,
       ObjectsHolder);
@@ -133,21 +135,55 @@ public class Main : MonoBehaviour
     }
   }
 
+  IEnumerator CaughtBadStarExplosionRoutine(Vector3 mouseClickPoint)
+  {
+    const float deltaMin = 0.1f;
+    const float delta    = 0.25f;
+
+    for (int i = 0; i < 3; i++)
+    {
+      Vector3 randomPos = mouseClickPoint;
+
+      float dx = Random.Range(-delta, delta);
+      float dy = Random.Range(-delta, delta);
+      
+      if (dx < 0) { dx = Mathf.Clamp(dx, -delta, -deltaMin); }
+      if (dx > 0) { dx = Mathf.Clamp(dx, deltaMin, delta);   }
+      if (dy < 0) { dy = Mathf.Clamp(dy, -delta, -deltaMin); }
+      if (dy > 0) { dy = Mathf.Clamp(dy, deltaMin, delta);   }
+
+      randomPos.x += dx;
+      randomPos.y += dy;
+            
+      var go = Instantiate(ExplosionPrefab, i == 0 ? mouseClickPoint : randomPos, Quaternion.identity);
+
+      Explosion ec = go.GetComponent<Explosion>();
+      if (ec != null)
+      {
+        ec.Explode(Color.red);
+      }
+
+      yield return new WaitForSeconds(0.2f);
+    }
+
+    yield return null;
+  }
+
   void CheckMouse()
   {
     if (Input.GetMouseButtonDown(0))
-    {      
+    {
       Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
       int mask = LayerMask.GetMask("stars");
-      
+
       RaycastHit2D hit = Physics2D.GetRayIntersection(ray, Mathf.Infinity, mask);
 
       if (hit.collider != null)
       {
         Star s = hit.collider.gameObject.GetComponent<Star>();
         if (s != null)
-        {          
+        {
           var starType = s.GetStarType();
           switch (starType)
           {
@@ -166,13 +202,13 @@ public class Main : MonoBehaviour
           Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
           wp.z = 0.0f;
 
-          var go = Instantiate(MouseClickEffectPrefab, wp, Quaternion.identity, ObjectsHolder);
-          Destroy(go, 3.0f);
-
           if (starType != Constants.StarType.BAD)
           {
+            var go = Instantiate(MouseClickEffectPrefab, hit.collider.gameObject.transform.position, Quaternion.identity, ObjectsHolder);
+            Destroy(go, 3.0f);
+
             float rndPitch = Random.Range(0.6f, 1.4f);
-            SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch);            
+            SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch);
             ScoreAnimator.Play("score-pop", -1, 0.0f);
           }
           else
@@ -180,6 +216,8 @@ public class Main : MonoBehaviour
             int index = Random.Range(1, 5);
             string soundName = string.Format("explode{0}", index);
             SoundManager.Instance.PlaySound(soundName);
+            IEnumerator coro = CaughtBadStarExplosionRoutine(wp);
+            StartCoroutine(coro);
             ScreenShaker.ShakeScreen();
           }
         }
