@@ -1,0 +1,13 @@
+*.suo
+/Temp
+/Library
+/*.csproj
+/*.unityproj
+/build
+/*.userprefs
+/*.sln
+/log*
+/Assets/UnityVS/*
+/Assets/UnityVS.meta
+/UnityVS.*
+/obj
