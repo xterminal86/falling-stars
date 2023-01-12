@@ -1,4 +1,5 @@
 *.suo
+/.vs
 /Temp
 /Library
 /*.csproj
