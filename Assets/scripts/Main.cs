@@ -108,6 +108,9 @@ public class Main : MonoBehaviour
 
   void Awake()
   {
+    Input.backButtonLeavesApp = true;
+    Application.targetFrameRate = 60;
+
     SoundManager.Instance.Initialize();
 
     DifficultyText.text = _difficulty.ToString();
