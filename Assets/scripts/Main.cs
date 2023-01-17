@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 // =================================
 using TMPro;
+using Unity.Burst.CompilerServices;
 
 public class Main : MonoBehaviour
 {
@@ -26,6 +27,11 @@ public class Main : MonoBehaviour
 
   public GameObject StartWindow;
   public GameObject RestartWindow;
+  public GameObject TitleText;
+  public GameObject BtnInfo;
+  public GameObject BtnHighScores;
+
+  public GameObject TouchEffectPrefab;
 
   public ScreenShake ScreenShaker;
 
@@ -51,7 +57,10 @@ public class Main : MonoBehaviour
 
   public void OnStartButton()
   {
-    StartWindow.SetActive(false);
+    //StartWindow.SetActive(false);
+    TitleText.SetActive(false);
+    BtnInfo.SetActive(false);
+    BtnHighScores.SetActive(false);
 
     StartGame();
   }
@@ -135,27 +144,36 @@ public class Main : MonoBehaviour
     }
   }
 
-  IEnumerator CaughtBadStarExplosionRoutine(Vector3 mouseClickPoint)
+  IEnumerator CaughtBadStarExplosionRoutine(Vector3 pointOfCreation)
   {
-    const float deltaMin = 0.1f;
-    const float delta    = 0.25f;
+    const float deltaMin = 0.2f;
+    const float delta = 0.4f;
+
+    Vector3 randomPos = pointOfCreation;
+
+    float dx = Random.Range(-delta, delta);
+    float dy = Random.Range(-delta, delta);
+
+    if (dx < 0) { dx = Mathf.Clamp(dx, -delta, -deltaMin); }
+    if (dx > 0) { dx = Mathf.Clamp(dx, deltaMin, delta);   }
+    if (dy < 0) { dy = Mathf.Clamp(dy, -delta, -deltaMin); }
+    if (dy > 0) { dy = Mathf.Clamp(dy, deltaMin, delta);   }
 
     for (int i = 0; i < 3; i++)
-    {
-      Vector3 randomPos = mouseClickPoint;
+    { 
+      if (i == 2)
+      {
+        dx = -dx;
+        dy = -dy;
+      }
 
-      float dx = Random.Range(-delta, delta);
-      float dy = Random.Range(-delta, delta);
-      
-      if (dx < 0) { dx = Mathf.Clamp(dx, -delta, -deltaMin); }
-      if (dx > 0) { dx = Mathf.Clamp(dx, deltaMin, delta);   }
-      if (dy < 0) { dy = Mathf.Clamp(dy, -delta, -deltaMin); }
-      if (dy > 0) { dy = Mathf.Clamp(dy, deltaMin, delta);   }
+      if (i != 0)
+      {
+        randomPos.x += dx;
+        randomPos.y += dy;
+      }
 
-      randomPos.x += dx;
-      randomPos.y += dy;
-            
-      var go = Instantiate(ExplosionPrefab, i == 0 ? mouseClickPoint : randomPos, Quaternion.identity);
+      var go = Instantiate(ExplosionPrefab, randomPos, Quaternion.identity);
 
       Explosion ec = go.GetComponent<Explosion>();
       if (ec != null)
@@ -167,6 +185,14 @@ public class Main : MonoBehaviour
     }
 
     yield return null;
+  }
+
+  void InstantiateAtMousePos(GameObject prefab)
+  {
+    Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+    wp.z = 0.0f;
+    var go = Instantiate(prefab, wp, Quaternion.identity, ObjectsHolder);
+    Destroy(go, 3.0f);
   }
 
   void CheckMouse()
@@ -184,6 +210,8 @@ public class Main : MonoBehaviour
         Star s = hit.collider.gameObject.GetComponent<Star>();
         if (s != null)
         {
+          Vector3 objPos = hit.collider.gameObject.transform.position;
+
           var starType = s.GetStarType();
           switch (starType)
           {
@@ -204,7 +232,7 @@ public class Main : MonoBehaviour
 
           if (starType != Constants.StarType.BAD)
           {
-            var go = Instantiate(MouseClickEffectPrefab, hit.collider.gameObject.transform.position, Quaternion.identity, ObjectsHolder);
+            var go = Instantiate(MouseClickEffectPrefab, objPos, Quaternion.identity, ObjectsHolder);
             Destroy(go, 3.0f);
 
             float rndPitch = Random.Range(0.6f, 1.4f);
@@ -216,11 +244,15 @@ public class Main : MonoBehaviour
             int index = Random.Range(1, 5);
             string soundName = string.Format("explode{0}", index);
             SoundManager.Instance.PlaySound(soundName);
-            IEnumerator coro = CaughtBadStarExplosionRoutine(wp);
+            IEnumerator coro = CaughtBadStarExplosionRoutine(objPos);
             StartCoroutine(coro);
             ScreenShaker.ShakeScreen();
           }
         }
+      }
+      else
+      {
+        InstantiateAtMousePos(TouchEffectPrefab);
       }
     }
   }
