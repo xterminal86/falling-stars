@@ -87,18 +87,18 @@ public class Star : MonoBehaviour
   bool _exploded = false;
   void CheckBorders()
   {
-    if (_transform.position.x < Constants.Borders.Key)
+    if (_transform.position.x < _mainRef.Borders.Key)
     {
       Vector3 pos = _transform.position;
-      pos.x = Constants.Borders.Key;
+      pos.x = _mainRef.Borders.Key;
       _transform.position = pos;
       _direction.x *= -1;
       _angleSpeed *= -1;
     }
-    else if (_transform.position.x > Constants.Borders.Value)
+    else if (_transform.position.x > _mainRef.Borders.Value)
     {
       Vector3 pos = _transform.position;
-      pos.x = Constants.Borders.Value;
+      pos.x = _mainRef.Borders.Value;
       _transform.position = pos;
       _direction.x *= -1;
       _angleSpeed *= -1;

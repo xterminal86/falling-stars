@@ -7,11 +7,14 @@ using UnityEngine.SceneManagement;
 using TMPro;
 using Unity.Burst.CompilerServices;
 
+using PairF = System.Collections.Generic.KeyValuePair<float, float>;
+
 public class Main : MonoBehaviour
 {
   int _difficulty = 1;
   int _score = 0;
 
+  public GameObject GroundCellPrefab;
   public GameObject StarPrefab;
   public GameObject MouseClickEffectPrefab;
   public GameObject ExplosionPrefab;
@@ -34,8 +37,6 @@ public class Main : MonoBehaviour
   public GameObject TouchEffectPrefab;
 
   public ScreenShake ScreenShaker;
-
-  public SpriteRenderer OrthoHelper;
 
   float _spawnTimeout = 0.0f;
 
@@ -108,19 +109,66 @@ public class Main : MonoBehaviour
     _gameStarted = true;
   }
 
+  PairF _borders;
+  PairF _spawnX;
+  float _spawnY;
+
+  public PairF Borders
+  {
+    get { return _borders; }
+  }
+
+  Vector2 _groundSpan = Vector2.zero;
+  void CreateGround()
+  {
+    float groundPosY = -(Camera.main.orthographicSize - 0.5f);
+
+    Vector3 pos = Vector3.zero;
+    for (float x = _groundSpan.x; x < _groundSpan.y; x++)
+    {
+      pos.x = x;
+      pos.y = groundPosY;
+
+      Instantiate(GroundCellPrefab, pos, Quaternion.identity, ObjectsHolder);
+    }
+  }
+
   void Awake()
   {
     Input.backButtonLeavesApp = true;
     Application.targetFrameRate = 90;
 
-    float d = (float)Screen.height / (float)Screen.width;
-    float c = OrthoHelper.bounds.size.x * d;
-    Camera.main.orthographicSize = c * 0.5f;
+    _spawnY = Camera.main.orthographicSize + 1.0f;
+
+    float aspect = (float)Screen.width / (float)Screen.height;
+    float hBorder = Camera.main.orthographicSize * aspect;
+
+    float groundSpanX = hBorder;
+
+    _spawnX = new PairF(-Mathf.Round(groundSpanX) + 2.0f,
+                        Mathf.Round(groundSpanX) - 2.0f);
+
+    groundSpanX = Mathf.Round(groundSpanX) + 2.0f;
+
+    _groundSpan.x = -groundSpanX;
+    _groundSpan.y = groundSpanX;
+
+    CreateGround();
 
     SoundManager.Instance.Initialize();
 
     DifficultyText.text = _difficulty.ToString();
     ScoreText.text = _score.ToString();
+
+    SpriteRenderer sr = StarPrefab.GetComponent<SpriteRenderer>();
+    if (sr != null)
+    {
+      float spriteWidth = sr.bounds.size.x;
+      float offset      = spriteWidth / 2.0f;
+
+      _borders = new PairF(-hBorder + offset,
+                           hBorder - offset);
+    }
   }
 
   void SpawnStar()
@@ -129,7 +177,7 @@ public class Main : MonoBehaviour
 
     int starType = Random.Range(0, maxType + 1);
 
-    float x = Random.Range(Constants.SpawnX.Key, Constants.SpawnX.Value);
+    float x = Random.Range(_spawnX.Key, _spawnX.Value);
     float angle = Random.Range(-Constants.StarFallSpreadAngle,
                                  Constants.StarFallSpreadAngle);
 
@@ -142,7 +190,7 @@ public class Main : MonoBehaviour
     Vector2 dir = new Vector2(s, -c);
 
     GameObject go = Instantiate(StarPrefab,
-      new Vector3(x, Constants.SpawnY, 0.0f),
+      new Vector3(x, _spawnY, 0.0f),
       Quaternion.identity,
       ObjectsHolder);
 
