@@ -6,7 +6,7 @@ using PairF = System.Collections.Generic.KeyValuePair<float, float>;
 
 public static class Constants
 {
-  public static readonly PairF Borders = new PairF(-8.5f, 8.5f);
+  public static readonly PairF Borders = new PairF(-8.75f, 8.75f);
   public static readonly float BottomBorder = -4.0f;
 
   public static readonly PairF SpawnX = new PairF(-8.0f, 8.0f);

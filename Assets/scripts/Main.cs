@@ -35,6 +35,8 @@ public class Main : MonoBehaviour
 
   public ScreenShake ScreenShaker;
 
+  public SpriteRenderer OrthoHelper;
+
   float _spawnTimeout = 0.0f;
 
   public void OnPlusButton()
@@ -109,7 +111,11 @@ public class Main : MonoBehaviour
   void Awake()
   {
     Input.backButtonLeavesApp = true;
-    Application.targetFrameRate = 60;
+    Application.targetFrameRate = 90;
+
+    float d = (float)Screen.height / (float)Screen.width;
+    float c = OrthoHelper.bounds.size.x * d;
+    Camera.main.orthographicSize = c * 0.5f;
 
     SoundManager.Instance.Initialize();
 
@@ -163,7 +169,7 @@ public class Main : MonoBehaviour
     if (dy > 0) { dy = Mathf.Clamp(dy, deltaMin, delta);   }
 
     for (int i = 0; i < 3; i++)
-    { 
+    {
       if (i == 2)
       {
         dx = -dx;

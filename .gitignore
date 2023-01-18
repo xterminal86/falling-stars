@@ -8,6 +8,7 @@
 /*.userprefs
 /*.sln
 /log*
+/Logs
 /Assets/UnityVS/*
 /Assets/UnityVS.meta
 /UnityVS.*
