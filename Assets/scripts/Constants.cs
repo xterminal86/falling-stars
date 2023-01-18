@@ -2,8 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-using PairF = System.Collections.Generic.KeyValuePair<float, float>;
-
 public static class Constants
 {
   public static readonly float BottomBorder = -4.0f;

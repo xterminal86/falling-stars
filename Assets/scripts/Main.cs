@@ -27,7 +27,7 @@ public class Main : MonoBehaviour
   public TMP_Text DifficultyText;
 
   public List<Heart> Hearts;
-
+  
   public GameObject StartWindow;
   public GameObject RestartWindow;
   public GameObject TitleText;
@@ -37,9 +37,10 @@ public class Main : MonoBehaviour
   public GameObject TouchEffectPrefab;
 
   public ScreenShake ScreenShaker;
+  public Config AppConfig;
 
   float _spawnTimeout = 0.0f;
-
+    
   public void OnPlusButton()
   {
     _difficulty++;
@@ -88,6 +89,7 @@ public class Main : MonoBehaviour
       _isGameOver = true;
       RestartWindow.SetActive(true);
       SoundManager.Instance.PlaySound("rekt", 0.5f);
+      AppConfig.AddHighscore(_score);
     }
   }
 
@@ -169,6 +171,8 @@ public class Main : MonoBehaviour
       _borders = new PairF(-hBorder + offset,
                            hBorder - offset);
     }
+
+    AppConfig.ReadConfig();
   }
 
   void SpawnStar()
