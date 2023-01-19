@@ -25,9 +25,10 @@ public class Main : MonoBehaviour
 
   public TMP_Text ScoreText;
   public TMP_Text DifficultyText;
+  public TMP_Text DbgTimeoutCounterText;
 
   public List<Heart> Hearts;
-  
+
   public GameObject StartWindow;
   public GameObject RestartWindow;
   public GameObject TitleText;
@@ -35,12 +36,13 @@ public class Main : MonoBehaviour
   public GameObject BtnHighScores;
 
   public GameObject TouchEffectPrefab;
+  public GameObject ScoreBubblePrefab;
 
   public ScreenShake ScreenShaker;
   public Config AppConfig;
 
   float _spawnTimeout = 0.0f;
-    
+
   public void OnPlusButton()
   {
     _difficulty++;
@@ -102,6 +104,11 @@ public class Main : MonoBehaviour
   bool _gameStarted = false;
   void StartGame()
   {
+    if (_gameStarted)
+    {
+      return;
+    }
+
     //float k = (float)_difficulty / 10.0f;
     //_spawnTimeout = Constants.SpawnTimeoutInit - (Constants.SpawnTimeoutInit - 0.5f) * k;
     _spawnTimeout = Constants.SpawnTimeoutInit;
@@ -201,7 +208,25 @@ public class Main : MonoBehaviour
     Star star = go.GetComponent<Star>();
     if (star != null)
     {
-      star.Init((Constants.StarType)starType, angle, dir, _difficulty);
+      //star.Init((Constants.StarType)starType, angle, dir, _difficulty);
+
+      Constants.StarType st = (Constants.StarType)starType;
+
+      float speedScale = 1.0f;
+
+      if (st == Constants.StarType.BAD)
+      {
+        int rndIndex = Random.Range(0, Constants.StarSpeedScaleByType.Count);
+        List<Constants.StarType> keyList = new List<Constants.StarType>(Constants.StarSpeedScaleByType.Keys);
+        Constants.StarType k = keyList[rndIndex];
+        speedScale = Constants.StarSpeedScaleByType[k];
+      }
+      else
+      {
+        speedScale = Constants.StarSpeedScaleByType[st];
+      }
+
+      star.Init(st, angle, dir, Constants.StartSpeed * speedScale);
     }
   }
 
@@ -299,6 +324,13 @@ public class Main : MonoBehaviour
             float rndPitch = Random.Range(0.6f, 1.4f);
             SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch);
             ScoreAnimator.Play("score-pop", -1, 0.0f);
+
+            var obj = Instantiate(ScoreBubblePrefab, new Vector3(objPos.x, objPos.y + 0.5f, 0.0f), Quaternion.identity, ObjectsHolder);
+            ScoreBubble sb = obj.GetComponent<ScoreBubble>();
+            if (sb != null)
+            {
+              sb.Init(starType);
+            }
           }
           else
           {
@@ -326,6 +358,8 @@ public class Main : MonoBehaviour
       return;
     }
 
+    DbgTimeoutCounterText.text = _spawnTimeout.ToString("F3");
+
     CheckMouse();
 
     _timer += Time.smoothDeltaTime;
@@ -335,5 +369,11 @@ public class Main : MonoBehaviour
       SpawnStar();
       _timer = 0.0f;
     }
+
+    _spawnTimeout -= Time.smoothDeltaTime * Constants.SpawnTimeoutDecrementScale;
+
+    _spawnTimeout = Mathf.Clamp(_spawnTimeout,
+                                Constants.SpawnTimeoutMax,
+                                Constants.SpawnTimeoutInit);
   }
 }

@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
+// =================================
 using SimpleJSON;
+// =================================
 using System.Collections.Generic;
 using System;
 
@@ -9,7 +11,6 @@ public class Config : MonoBehaviour
 
   string _playerPrefsConfigKey = "fs-cfg";
 
-  string _highscoreConfigPlaceKey = "e-place";
   string _highscoreConfigScoreKey = "e-score";
   string _highscoreConfigTimestampKey = "e-timestamp";
 
@@ -22,12 +23,12 @@ public class Config : MonoBehaviour
   }
 
   string GetTimestamp()
-  {    
+  {
     string day = DateTime.Now.ToString("dd");
     string month = DateTime.Now.ToString("MM");
     string year = DateTime.Now.ToString("yyyy");
     string tm = DateTime.Now.ToString("HH:mm");
-        
+
     return string.Format("{0}.{1}.{2} ({3})", day, month, year, tm);
   }
 
@@ -45,28 +46,34 @@ public class Config : MonoBehaviour
 
   public void AddHighscore(int newScore)
   {
-    for (int i = 0; i < _highScores.Count; i++)
-    {
-      if (newScore > _highScores[i].Score)
-      {
-        HighScoreData d = new HighScoreData();
-        
-        d.Place     = i + 1;
-        d.Timestamp = GetTimestamp();
-        d.Score     = newScore;
+    HighScoreData d = new HighScoreData();
 
-        _highScores.Insert(i, d);
+    d.Timestamp = GetTimestamp();
+    d.Score     = newScore;
 
-        SaveHighScores();
+    _highScores.Add(d);
 
-        break;
-      }
-    }
+    SortHighscores();
+
+    //
+    // Delete excess entries
+    //
+    int toRemove = _highScores.Count - HighScoreEntries.Count;
+    _highScores.RemoveRange(HighScoreEntries.Count - 1, toRemove);
+
+    SaveHighScores();
   }
 
   void SortHighscores()
   {
-    _highScores.Sort((e1, e2) => e1.Score.CompareTo(e2.Score));
+    _highScores.Sort((e1, e2) => e2.Score.CompareTo(e1.Score));
+
+    int place = 0;
+    foreach (var item in _highScores)
+    {
+      item.Place = (place + 1);
+      place++;
+    }
   }
 
   string _defaultFillerScore = new string('.', 12);
@@ -84,13 +91,20 @@ public class Config : MonoBehaviour
       }
       else
       {
-        HighScoreEntries[i].Place.text = 
+        HighScoreEntries[i].Place.text =
           (_highScores[i].Place != 10) ?
           string.Format(" {0}", _highScores[i].Place) :
           string.Format("{0}", _highScores[i].Place);
 
         HighScoreEntries[i].Timestamp.text = _highScores[i].Timestamp;
-        HighScoreEntries[i].Score.text = _highScores[i].Score.ToString();
+
+        int fillerCount = _defaultFillerScore.Length -
+                          _highScores[i].Score.ToString().Length;
+
+        string fillerToAdd = new string('.', fillerCount);
+
+        string scoreString = string.Format("{0}{1}", fillerToAdd, _highScores[i].Score);
+        HighScoreEntries[i].Score.text = scoreString;
       }
     }
   }
@@ -119,7 +133,6 @@ public class Config : MonoBehaviour
         HighScoreData d = new HighScoreData();
 
         d.Timestamp = n[_highscoreConfigTimestampKey];
-        d.Place     = (int)n[_highscoreConfigPlaceKey];
         d.Score     = (int)n[_highscoreConfigScoreKey];
 
         _highScores.Add(d);
@@ -139,8 +152,7 @@ public class Config : MonoBehaviour
   string GetJsonForHighscore(HighScoreData d)
   {
     JSONNode json = new JSONObject();
-    json[_highscoreConfigPlaceKey] = d.Place.ToString();
-    json[_highscoreConfigScoreKey] = d.Score.ToString();
+    json[_highscoreConfigScoreKey]     = d.Score.ToString();
     json[_highscoreConfigTimestampKey] = d.Timestamp;
     return json.ToString();
   }

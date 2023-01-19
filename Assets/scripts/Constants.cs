@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
+// =================================
 using UnityEngine;
 
 public static class Constants
 {
   public static readonly float BottomBorder = -4.0f;
 
-  public static readonly float SpawnTimeoutInit = 0.5f;
+  public static readonly float SpawnTimeoutInit = 2.0f;
+  public static readonly float SpawnTimeoutMax = 0.25f;
+  public static readonly float SpawnTimeoutDecrementScale = 0.025f;
   public static readonly float StartSpeed = 2.0f;
 
   public static readonly float StarFallSpreadAngle = 60.0f;
@@ -31,9 +34,17 @@ public static class Constants
 
   public static readonly Dictionary<StarType, int> StarScoreByType = new Dictionary<StarType, int>()
   {
-    { StarType.YELLOW, 6 },
-    { StarType.CYAN,   4 },
+    { StarType.YELLOW, 4 },
+    { StarType.CYAN,   3 },
     { StarType.GREEN,  2 },
     { StarType.SILVER, 1 }
+  };
+
+  public static readonly Dictionary<StarType, float> StarSpeedScaleByType = new Dictionary<StarType, float>()
+  {
+    { StarType.YELLOW, 2.4f },
+    { StarType.CYAN,   2.1f },
+    { StarType.GREEN,  1.8f },
+    { StarType.SILVER, 1.5f }
   };
 }
