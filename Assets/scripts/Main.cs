@@ -182,11 +182,13 @@ public class Main : MonoBehaviour
     AppConfig.ReadConfig();
   }
 
-  void SpawnStar()
+  void SpawnStar(bool badStar)
   {
-    int maxType = (int)Constants.StarType.BAD;
+    int maxType = (int)Constants.StarType.SILVER;
 
-    int starType = Random.Range(0, maxType + 1);
+    int starType = badStar ? 
+                    (int)Constants.StarType.BAD : 
+                    Random.Range(0, maxType + 1);
 
     float x = Random.Range(_spawnX.Key, _spawnX.Value);
     float angle = Random.Range(-Constants.StarFallSpreadAngle,
@@ -351,6 +353,8 @@ public class Main : MonoBehaviour
   }
 
   float _timer = 0.0f;
+  float _timerBad = 0.0f;
+
   void Update()
   {
     if (!_gameStarted || _isGameOver)
@@ -364,9 +368,17 @@ public class Main : MonoBehaviour
 
     _timer += Time.smoothDeltaTime;
 
+    _timerBad += Time.smoothDeltaTime;
+
+    if (_timerBad > _spawnTimeout * 1.5f)
+    {
+      SpawnStar(true);
+      _timerBad = 0.0f;
+    }
+
     if (_timer > _spawnTimeout)
     {
-      SpawnStar();
+      SpawnStar(false);
       _timer = 0.0f;
     }
 

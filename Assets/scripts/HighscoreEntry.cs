@@ -7,5 +7,5 @@ public class HighscoreEntry : MonoBehaviour
 {
   public TMP_Text Place;
   public TMP_Text Timestamp;
-  public TMP_Text Score;  
+  public TMP_Text Score;
 }

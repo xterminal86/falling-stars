@@ -10,6 +10,12 @@ public class Star : MonoBehaviour
 
   public GameObject ExplosionPrefab;
 
+  public Sprite SpriteRed;
+  public Sprite SpriteGreen;
+  public Sprite SpriteYellow;
+  public Sprite SpriteSilver;
+  public Sprite SpriteCyan;
+
   Vector2 _direction = Vector2.zero;
   float _speed = 0.0f;
   float _startAngle = 0.0f;
@@ -79,7 +85,30 @@ public class Star : MonoBehaviour
 
     _color = Constants.StarColorsByType[type];
 
-    _spriteRenderer.color = _color;
+    switch (type)
+    {
+      case Constants.StarType.BAD:
+        _spriteRenderer.sprite = SpriteRed;
+        break;
+
+      case Constants.StarType.GREEN:
+        _spriteRenderer.sprite = SpriteGreen;
+        break;
+
+      case Constants.StarType.CYAN:
+        _spriteRenderer.sprite = SpriteCyan;
+        break;
+
+      case Constants.StarType.SILVER:
+        _spriteRenderer.sprite = SpriteSilver;
+        break;
+
+      case Constants.StarType.YELLOW:
+        _spriteRenderer.sprite = SpriteYellow;
+        break;
+    }
+
+    //_spriteRenderer.color = _color;
 
     AdjustParticleSystemColor(Shine);
     AdjustParticleSystemColor(Trail);

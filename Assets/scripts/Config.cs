@@ -22,6 +22,16 @@ public class Config : MonoBehaviour
     get { return _highScores; }
   }
 
+  public void ClearScores()
+  {
+    _highScores.Clear();
+
+    CreateDefaultConfig();
+    WriteConfig();
+    SortHighscores();
+    UpdateWindow();
+  }
+
   string GetTimestamp()
   {
     string day = DateTime.Now.ToString("dd");
@@ -109,6 +119,22 @@ public class Config : MonoBehaviour
     }
   }
 
+  void CreateDefaultConfig()
+  {
+    string entryKey = string.Empty;
+
+    for (int i = 0; i < HighScoreEntries.Count; i++)
+    {
+      HighScoreData d = new HighScoreData();
+
+      _highScores.Add(d);
+
+      entryKey = string.Format("entry-{0}", i);
+
+      DataAsJson[entryKey] = GetJsonForHighscore(d);
+    }
+  }
+
   public void ReadConfig()
   {
     //PlayerPrefs.DeleteAll();
@@ -155,23 +181,7 @@ public class Config : MonoBehaviour
     json[_highscoreConfigScoreKey]     = d.Score.ToString();
     json[_highscoreConfigTimestampKey] = d.Timestamp;
     return json.ToString();
-  }
-
-  void CreateDefaultConfig()
-  {
-    string entryKey = string.Empty;
-
-    for (int i = 0; i < HighScoreEntries.Count; i++)
-    {
-      HighScoreData d = new HighScoreData();
-
-      _highScores.Add(d);
-
-      entryKey = string.Format("entry-{0}", i);
-
-      DataAsJson[entryKey] = GetJsonForHighscore(d);
-    }
-  }
+  }  
 
   public void WriteConfig()
   {
