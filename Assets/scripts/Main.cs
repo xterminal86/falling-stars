@@ -90,7 +90,7 @@ public class Main : MonoBehaviour
     {
       _isGameOver = true;
       RestartWindow.SetActive(true);
-      SoundManager.Instance.PlaySound("rekt", 0.5f);
+      SoundManager.Instance.PlaySound("game-over", 0.5f, 1.0f, false);
       AppConfig.AddHighscore(_score);
     }
   }
@@ -314,7 +314,11 @@ public class Main : MonoBehaviour
       if (hit.collider != null)
       {
         Star s = hit.collider.gameObject.GetComponentInParent<Star>();
-        if (s != null)
+        //
+        // Prevent scoring via mouse click and losing score due to miss
+        // if clicked at the same time as star hit the ground.
+        //
+        if (s != null && !s.Exploded)
         {
           Vector3 objPos = hit.collider.gameObject.transform.position;
 
@@ -345,7 +349,7 @@ public class Main : MonoBehaviour
             Destroy(go, 3.0f);
 
             float rndPitch = Random.Range(0.6f, 1.4f);
-            SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch);
+            SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch, false);
             ScoreAnimator.Play("score-pop", -1, 0.0f);
 
             var obj = Instantiate(ScoreBubblePrefab, new Vector3(objPos.x, objPos.y + 0.5f, 0.0f), Quaternion.identity, ObjectsHolder);

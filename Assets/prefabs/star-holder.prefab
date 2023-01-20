@@ -9824,6 +9824,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   InnerObject: {fileID: 7923839013099749732}
+  FallingSound: {fileID: 0}
   Shine: {fileID: 7802568290596619288}
   Trail: {fileID: 7802568290604368471}
   ExplosionPrefab: {fileID: 9007235039479270865, guid: 4bc1f91cf397f1b49b1307a90ce300d5, type: 3}

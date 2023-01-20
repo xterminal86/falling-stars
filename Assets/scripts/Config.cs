@@ -42,6 +42,14 @@ public class Config : MonoBehaviour
     return string.Format("{0}.{1}.{2} ({3})", day, month, year, tm);
   }
 
+  void PrintHighscoreList()
+  {
+    foreach (var item in _highScores)
+    {
+      Debug.Log(item.ToString());
+    }
+  }
+
   void SaveHighScores()
   {
     for (int i = 0; i < HighScoreEntries.Count; i++)
@@ -68,8 +76,8 @@ public class Config : MonoBehaviour
     //
     // Delete excess entries
     //
-    int toRemove = _highScores.Count - HighScoreEntries.Count;
-    _highScores.RemoveRange(HighScoreEntries.Count - 1, toRemove);
+    int toRemove = _highScores.Count - HighScoreEntries.Count;    
+    _highScores.RemoveRange(_highScores.Count - 1, toRemove);
 
     SaveHighScores();
   }

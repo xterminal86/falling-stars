@@ -54,4 +54,12 @@ public static class Constants
     { StarType.GREEN,  1.25f },
     { StarType.SILVER, 0.75f }
   };
+
+  public static readonly Dictionary<StarType, float> StarAdditionalScoreMultiplierByType = new Dictionary<StarType, float>()
+  {
+    { StarType.YELLOW, 1.3f },
+    { StarType.CYAN,   1.2f },
+    { StarType.GREEN,  1.1f },
+    { StarType.SILVER, 1.0f }
+  };
 }

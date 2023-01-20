@@ -120,7 +120,7 @@ public class Star : MonoBehaviour
 
     if (_additionalScore != 0)
     {
-      _additionalScore = Mathf.RoundToInt((float)_additionalScore * Constants.StarSpeedScaleByType[_starType]);
+      _additionalScore = Mathf.RoundToInt((float)_additionalScore * Constants.StarAdditionalScoreMultiplierByType[_starType]);
     }
 
     return _additionalScore;
@@ -198,6 +198,11 @@ public class Star : MonoBehaviour
   }
 
   bool _exploded = false;
+  public bool Exploded
+  {
+    get { return _exploded; }
+  }
+
   Vector3 _tmpPos = Vector3.zero;
   PairF _borders;
   void CheckBorders()
@@ -245,13 +250,13 @@ public class Star : MonoBehaviour
 
         if (_starType == Constants.StarType.BAD)
         {
-          SoundManager.Instance.PlaySound("grenade");
+          SoundManager.Instance.PlaySound("star-douse", 0.25f);
         }
         else
         {
-          int index = Random.Range(1, 4);
-          string soundName = string.Format("glass{0}", index);
-          SoundManager.Instance.PlaySound(soundName, 0.5f);
+          float pitch = 1.25f * Constants.StarSpeedScaleByType[_starType];
+          float volume = 0.4f * (pitch * 0.25f);
+          SoundManager.Instance.PlaySound("star-break", volume, pitch);
         }
       }
 
@@ -260,9 +265,9 @@ public class Star : MonoBehaviour
       Destroy(gameObject, 3.0f);
     }
   }
-
+    
   public void ProcessHit()
-  {
+  {    
     _spriteRenderer.enabled = false;
     _collider.enabled = false;
     _speed = 0.0f;
