@@ -266,8 +266,10 @@ public class Star : MonoBehaviour
     }
   }
     
+  bool _starCaught = false;
   public void ProcessHit()
   {    
+    _starCaught = true;
     _spriteRenderer.enabled = false;
     _collider.enabled = false;
     _speed = 0.0f;
@@ -352,6 +354,11 @@ public class Star : MonoBehaviour
 
   void Update()
   {
+    if (_exploded || _starCaught)
+    {
+      return;
+    }
+
     CheckBorders();
     UpdatePosition();
   }
