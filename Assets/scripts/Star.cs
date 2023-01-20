@@ -96,6 +96,36 @@ public class Star : MonoBehaviour
     }
   }
 
+  int _additionalScore = 0;
+  public int GetAdditionalScore()
+  {
+    _additionalScore = 0;
+
+    switch(_starTrajectory)
+    {
+      case Constants.StarTrajectory.WAVE:
+        int ww = Mathf.RoundToInt(_waveWidth);
+        _additionalScore = (_wobbleSpeed + ww);
+        break;
+
+      case Constants.StarTrajectory.CIRCLE:
+        int r = Mathf.RoundToInt(_radius);
+        _additionalScore = (_rotationSpeed + r);
+        break;
+
+      case Constants.StarTrajectory.LINE:
+        // Do nothing
+        break;
+    }
+
+    if (_additionalScore != 0)
+    {
+      _additionalScore = Mathf.RoundToInt((float)_additionalScore * Constants.StarSpeedScaleByType[_starType]);
+    }
+
+    return _additionalScore;
+  }
+
   Constants.StarTrajectory _starTrajectory;
   public void Init(Constants.StarType type,
                     float angle,
@@ -144,24 +174,49 @@ public class Star : MonoBehaviour
     AdjustParticleSystemColor(Trail);
   }
 
+  float _adjustedBorderLeft = 0.0f;
+  float _adjustedBorderRight = 0.0f;
+  void AdjustBorders()
+  {
+    switch (_starTrajectory)
+    {
+      case Constants.StarTrajectory.WAVE:
+        _adjustedBorderLeft  = _borders.Key + _waveWidth;
+        _adjustedBorderRight = _borders.Value - _waveWidth;
+        break;
+
+      case Constants.StarTrajectory.CIRCLE:
+        _adjustedBorderLeft  = _borders.Key + _radius;
+        _adjustedBorderRight = _borders.Value - _radius;
+        break;
+
+      case Constants.StarTrajectory.LINE:
+        _adjustedBorderLeft = _borders.Key;
+        _adjustedBorderRight = _borders.Value;
+        break;
+    }
+  }
+
   bool _exploded = false;
   Vector3 _tmpPos = Vector3.zero;
   PairF _borders;
   void CheckBorders()
   {
-    _borders = _mainRef.GetBorders(_starTrajectory);
+    _borders = _mainRef.Borders;
 
-    if (transform.position.x < _borders.Key)
+    AdjustBorders();
+
+    if (transform.position.x < _adjustedBorderLeft)
     {
       _tmpPos = transform.position;
-      _tmpPos.x = _borders.Key;
+      _tmpPos.x = _adjustedBorderLeft;
       transform.position = _tmpPos;
       _direction.x *= -1;
     }
-    else if (transform.position.x > _borders.Value)
+    else if (transform.position.x > _adjustedBorderRight)
     {
       _tmpPos = transform.position;
-      _tmpPos.x = _borders.Value;
+      _tmpPos.x = _adjustedBorderRight;
       transform.position = _tmpPos;
       _direction.x *= -1;
     }

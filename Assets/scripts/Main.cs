@@ -84,7 +84,7 @@ public class Main : MonoBehaviour
     int guiIndex = Hearts.Count - _lives;
     Hearts[guiIndex].FadeAway();
 
-    //_lives--;
+    _lives--;
 
     if (_lives == 0)
     {
@@ -119,22 +119,15 @@ public class Main : MonoBehaviour
   }
 
   PairF _borders;
+  public PairF Borders
+  {
+    get { return _borders; }
+  }
+
   PairF _spawnX;
   PairF _spawnTrajX;
 
   float _spawnY;
-
-  public PairF GetBorders(Constants.StarTrajectory traj)
-  {
-    if (traj != Constants.StarTrajectory.LINE)
-    {
-      return _spawnTrajX;
-    }
-    else
-    {
-      return _borders;
-    }
-  }
 
   Vector2 _groundSpan = Vector2.zero;
   void CreateGround()
@@ -325,6 +318,8 @@ public class Main : MonoBehaviour
         {
           Vector3 objPos = hit.collider.gameObject.transform.position;
 
+          int totalScore = 0;
+
           var starType = s.GetStarType();
           switch (starType)
           {
@@ -333,7 +328,8 @@ public class Main : MonoBehaviour
               break;
 
             default:
-              _score += Constants.StarScoreByType[starType];
+              totalScore = Constants.StarScoreByType[starType] + s.GetAdditionalScore();
+              _score += totalScore;
               ScoreText.text = _score.ToString();
               break;
           }
@@ -356,7 +352,7 @@ public class Main : MonoBehaviour
             ScoreBubble sb = obj.GetComponent<ScoreBubble>();
             if (sb != null)
             {
-              sb.Init(starType);
+              sb.Init(starType, totalScore);
             }
           }
           else

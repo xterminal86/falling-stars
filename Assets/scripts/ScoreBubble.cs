@@ -32,9 +32,8 @@ public class ScoreBubble : MonoBehaviour
     yield return null;
   }
 
-  public void Init(Constants.StarType starType)
+  public void Init(Constants.StarType starType, int score)
   {
-    int score = Constants.StarScoreByType[starType];
     ScoreText.text = string.Format("+{0}", score);
 
     _textColor = Constants.StarColorsByType[starType];

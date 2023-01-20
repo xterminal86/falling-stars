@@ -1,3 +1,4 @@
+core*
 *.suo
 /.vs
 /Temp
