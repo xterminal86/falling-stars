@@ -84,7 +84,7 @@ public class Main : MonoBehaviour
     int guiIndex = Hearts.Count - _lives;
     Hearts[guiIndex].FadeAway();
 
-    _lives--;
+    //_lives--;
 
     if (_lives == 0)
     {
@@ -120,11 +120,20 @@ public class Main : MonoBehaviour
 
   PairF _borders;
   PairF _spawnX;
+  PairF _spawnTrajX;
+
   float _spawnY;
 
-  public PairF Borders
+  public PairF GetBorders(Constants.StarTrajectory traj)
   {
-    get { return _borders; }
+    if (traj != Constants.StarTrajectory.LINE)
+    {
+      return _spawnTrajX;
+    }
+    else
+    {
+      return _borders;
+    }
   }
 
   Vector2 _groundSpan = Vector2.zero;
@@ -155,7 +164,13 @@ public class Main : MonoBehaviour
     float groundSpanX = hBorder;
 
     _spawnX = new PairF(-Mathf.Round(groundSpanX) + 2.0f,
-                        Mathf.Round(groundSpanX) - 2.0f);
+                         Mathf.Round(groundSpanX) - 2.0f);
+
+    _spawnTrajX = new PairF(-Mathf.Round(groundSpanX) + 4.0f,
+                            Mathf.Round(groundSpanX) - 4.0f);
+
+    //Debug.Log(string.Format("SpawnX: {0}", _spawnX));
+    //Debug.Log(string.Format("SpawnTrajX: {0}", _spawnTrajX));
 
     groundSpanX = Mathf.Round(groundSpanX) + 2.0f;
 
@@ -169,7 +184,7 @@ public class Main : MonoBehaviour
     DifficultyText.text = _difficulty.ToString();
     ScoreText.text = _score.ToString();
 
-    SpriteRenderer sr = StarPrefab.GetComponent<SpriteRenderer>();
+    SpriteRenderer sr = StarPrefab.GetComponentInChildren<SpriteRenderer>();
     if (sr != null)
     {
       float spriteWidth = sr.bounds.size.x;
@@ -179,6 +194,8 @@ public class Main : MonoBehaviour
                            hBorder - offset);
     }
 
+    //Debug.Log(string.Format("Borders: {0}", _borders));
+
     AppConfig.ReadConfig();
   }
 
@@ -186,13 +203,18 @@ public class Main : MonoBehaviour
   {
     int maxType = (int)Constants.StarType.SILVER;
 
-    int starType = badStar ? 
-                    (int)Constants.StarType.BAD : 
+    int starType = badStar ?
+                    (int)Constants.StarType.BAD :
                     Random.Range(0, maxType + 1);
 
-    float x = Random.Range(_spawnX.Key, _spawnX.Value);
+    int trajType = Random.Range(0, 3);
+
+    PairF spawnX = (trajType == 0) ? _spawnX : _spawnTrajX;
+
+    float x = Random.Range(spawnX.Key, spawnX.Value);
+
     float angle = Random.Range(-Constants.StarFallSpreadAngle,
-                                 Constants.StarFallSpreadAngle);
+                                Constants.StarFallSpreadAngle);
 
     float s = Mathf.Sin(angle * Mathf.Deg2Rad);
     float c = Mathf.Cos(angle * Mathf.Deg2Rad);
@@ -203,16 +225,15 @@ public class Main : MonoBehaviour
     Vector2 dir = new Vector2(s, -c);
 
     GameObject go = Instantiate(StarPrefab,
-      new Vector3(x, _spawnY, 0.0f),
+      new Vector2(x, _spawnY),
       Quaternion.identity,
       ObjectsHolder);
 
     Star star = go.GetComponent<Star>();
     if (star != null)
     {
-      //star.Init((Constants.StarType)starType, angle, dir, _difficulty);
-
       Constants.StarType st = (Constants.StarType)starType;
+      Constants.StarTrajectory traj = (Constants.StarTrajectory)trajType;
 
       float speedScale = 1.0f;
 
@@ -228,7 +249,11 @@ public class Main : MonoBehaviour
         speedScale = Constants.StarSpeedScaleByType[st];
       }
 
-      star.Init(st, angle, dir, Constants.StartSpeed * speedScale);
+      star.Init(st,
+                angle,
+                dir,
+                Constants.StartSpeed * speedScale,
+                traj);
     }
   }
 
@@ -295,7 +320,7 @@ public class Main : MonoBehaviour
 
       if (hit.collider != null)
       {
-        Star s = hit.collider.gameObject.GetComponent<Star>();
+        Star s = hit.collider.gameObject.GetComponentInParent<Star>();
         if (s != null)
         {
           Vector3 objPos = hit.collider.gameObject.transform.position;

@@ -9,7 +9,7 @@ public static class Constants
 
   public static readonly float SpawnTimeoutInit = 2.0f;
   public static readonly float SpawnTimeoutMax = 0.25f;
-  public static readonly float SpawnTimeoutDecrementScale = 0.025f;
+  public static readonly float SpawnTimeoutDecrementScale = 0.0125f;
   public static readonly float StartSpeed = 2.0f;
 
   public static readonly float StarFallSpreadAngle = 60.0f;
@@ -22,6 +22,13 @@ public static class Constants
     SILVER,
     BAD
   };
+
+  public enum StarTrajectory
+  {
+    LINE = 0,
+    WAVE,
+    CIRCLE
+  }
 
   public static readonly Dictionary<StarType, Color> StarColorsByType = new Dictionary<StarType, Color>()
   {
@@ -42,9 +49,9 @@ public static class Constants
 
   public static readonly Dictionary<StarType, float> StarSpeedScaleByType = new Dictionary<StarType, float>()
   {
-    { StarType.YELLOW, 2.4f },
-    { StarType.CYAN,   2.1f },
-    { StarType.GREEN,  1.8f },
-    { StarType.SILVER, 1.5f }
+    { StarType.YELLOW, 2.0f },
+    { StarType.CYAN,   1.5f },
+    { StarType.GREEN,  1.0f },
+    { StarType.SILVER, 0.5f }
   };
 }

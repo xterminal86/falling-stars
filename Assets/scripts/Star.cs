@@ -3,8 +3,12 @@ using System.Collections.Generic;
 // =================================
 using UnityEngine;
 
+using PairF = System.Collections.Generic.KeyValuePair<float, float>;
+
 public class Star : MonoBehaviour
 {
+  public Transform InnerObject;
+
   public ParticleSystem Shine;
   public ParticleSystem Trail;
 
@@ -18,16 +22,14 @@ public class Star : MonoBehaviour
 
   Vector2 _direction = Vector2.zero;
   float _speed = 0.0f;
-  float _startAngle = 0.0f;
   float _angleSpeed = 0.0f;
 
-  const float _starSpinSpeed = 500.0f;
+  const float _starSpinSpeed = 125.0f;
 
   Color _color = Color.magenta;
 
   Main _mainRef;
 
-  Transform _transform;
   SpriteRenderer _spriteRenderer;
   CircleCollider2D _collider;
   void Awake()
@@ -37,10 +39,13 @@ public class Star : MonoBehaviour
     {
       _mainRef = objects[0].GetComponent<Main>();
     }
+    else
+    {
+      Debug.LogWarning("MainScript not found!");
+    }
 
-    _transform = GetComponent<Transform>();
-    _spriteRenderer = GetComponent<SpriteRenderer>();
-    _collider = GetComponent<CircleCollider2D>();
+    _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+    _collider = GetComponentInChildren<CircleCollider2D>();
   }
 
   void AdjustParticleSystemColor(ParticleSystem ps)
@@ -71,17 +76,42 @@ public class Star : MonoBehaviour
     return _starType;
   }
 
+  void RandomizeTrajectory()
+  {
+    switch(_starTrajectory)
+    {
+      case Constants.StarTrajectory.WAVE:
+        _wobbleSpeed = Random.Range(1, 6);
+        _waveWidth = Random.Range(1.0f, 2.0f);
+        break;
+
+      case Constants.StarTrajectory.CIRCLE:
+        _rotationSpeed = Random.Range(2, 7);
+        _radius = Random.Range(0.25f, 1.0f);
+        break;
+
+      case Constants.StarTrajectory.LINE:
+        // Do nothing
+        break;
+    }
+  }
+
+  Constants.StarTrajectory _starTrajectory;
   public void Init(Constants.StarType type,
                     float angle,
                     Vector2 dir,
-                    float speed)
+                    float speed,
+                    Constants.StarTrajectory trajectory = Constants.StarTrajectory.LINE)
   {
-    _starType = type;
-    _direction = dir;
-    _speed = speed;
-    _startAngle = angle;
+    _starType   = type;
+    _direction  = dir;
+    _speed      = speed;
 
-    _angleSpeed = _starSpinSpeed * (_startAngle / -Constants.StarFallSpreadAngle);
+    _starTrajectory = trajectory;
+
+    RandomizeTrajectory();
+
+    _angleSpeed = Mathf.Sign(angle) * _speed * _starSpinSpeed;
 
     _color = Constants.StarColorsByType[type];
 
@@ -115,33 +145,35 @@ public class Star : MonoBehaviour
   }
 
   bool _exploded = false;
+  Vector3 _tmpPos = Vector3.zero;
+  PairF _borders;
   void CheckBorders()
   {
-    if (_transform.position.x < _mainRef.Borders.Key)
+    _borders = _mainRef.GetBorders(_starTrajectory);
+
+    if (transform.position.x < _borders.Key)
     {
-      Vector3 pos = _transform.position;
-      pos.x = _mainRef.Borders.Key;
-      _transform.position = pos;
+      _tmpPos = transform.position;
+      _tmpPos.x = _borders.Key;
+      transform.position = _tmpPos;
       _direction.x *= -1;
-      _angleSpeed *= -1;
     }
-    else if (_transform.position.x > _mainRef.Borders.Value)
+    else if (transform.position.x > _borders.Value)
     {
-      Vector3 pos = _transform.position;
-      pos.x = _mainRef.Borders.Value;
-      _transform.position = pos;
+      _tmpPos = transform.position;
+      _tmpPos.x = _borders.Value;
+      transform.position = _tmpPos;
       _direction.x *= -1;
-      _angleSpeed *= -1;
     }
 
-    if (_transform.position.y < Constants.BottomBorder)
+    if (InnerObject.position.y < Constants.BottomBorder)
     {
       _spriteRenderer.enabled = false;
       _collider.enabled = false;
 
       if (!_exploded)
       {
-        var go = Instantiate(ExplosionPrefab, _transform.position, Quaternion.identity);
+        var go = Instantiate(ExplosionPrefab, InnerObject.position, Quaternion.identity);
 
         Explosion ec = go.GetComponent<Explosion>();
         if (ec != null)
@@ -168,6 +200,8 @@ public class Star : MonoBehaviour
         }
       }
 
+      Shine.Stop();
+      Trail.Stop();
       Destroy(gameObject, 3.0f);
     }
   }
@@ -183,19 +217,82 @@ public class Star : MonoBehaviour
     Destroy(gameObject, 1.0f);
   }
 
+  Vector3 _innerObjectPos = Vector3.zero;
+
+  int _angle = 0;
+
+  float _sinResult = 0.0f;
+  float _cosResult = 0.0f;
+
+  int _rotationSpeed = 4;
+  float _radius = 1.5f;
+  void AddCircle()
+  {
+    _innerObjectPos = InnerObject.localPosition;
+
+    _sinResult = Mathf.Sin(_angle * Mathf.Deg2Rad);
+    _cosResult = Mathf.Cos(_angle * Mathf.Deg2Rad);
+
+    _angle += _rotationSpeed;
+    _angle %= 360;
+
+    _innerObjectPos.x = (_sinResult * _radius);
+    _innerObjectPos.y = (_cosResult * _radius);
+
+    InnerObject.localPosition = _innerObjectPos;
+  }
+
+  float _waveWidth = 1.0f;
+  int _wobbleSpeed = 10;
+  void AddWave()
+  {
+    _innerObjectPos = InnerObject.localPosition;
+
+    _sinResult = Mathf.Sin(_angle * Mathf.Deg2Rad);
+
+    _angle += _wobbleSpeed;
+    _angle %= 360;
+
+    _innerObjectPos.x = (_sinResult * _waveWidth);
+
+    InnerObject.localPosition = _innerObjectPos;
+  }
+
+  Vector3 _holderPos = Vector3.zero;
+  Vector3 _angles = Vector3.zero;
+  void UpdatePosition()
+  {
+    _holderPos = transform.position;
+    _angles    = InnerObject.eulerAngles;
+
+    switch (_starTrajectory)
+    {
+      case Constants.StarTrajectory.WAVE:
+        AddWave();
+        break;
+
+      case Constants.StarTrajectory.CIRCLE:
+        AddCircle();
+        break;
+
+      case Constants.StarTrajectory.LINE:
+        // Pass through
+        break;
+    }
+
+    _holderPos.x += _direction.x * _speed * Time.smoothDeltaTime;
+    _holderPos.y += _direction.y * _speed * Time.smoothDeltaTime;
+
+    _angles.z += _angleSpeed * Time.smoothDeltaTime;
+
+    InnerObject.localRotation = Quaternion.Euler(_angles);
+
+    transform.position = _holderPos;
+  }
+
   void Update()
   {
-    Vector3 pos = _transform.position;
-    pos.y += _direction.y * (_speed * Time.smoothDeltaTime);
-    pos.x += _direction.x * (_speed * Time.smoothDeltaTime);
-
-    _transform.position = pos;
-
-    Vector3 angles = _transform.rotation.eulerAngles;
-    angles.z += _angleSpeed * Time.smoothDeltaTime;
-
-    _transform.rotation = Quaternion.Euler(angles);
-
     CheckBorders();
+    UpdatePosition();
   }
 }
