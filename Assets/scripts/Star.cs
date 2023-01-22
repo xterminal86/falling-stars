@@ -250,7 +250,7 @@ public class Star : MonoBehaviour
 
         if (_starType == Constants.StarType.BAD)
         {
-          SoundManager.Instance.PlaySound("star-douse", 0.25f);
+          SoundManager.Instance.PlaySound("star-douse-eq", 0.5f);
         }
         else
         {

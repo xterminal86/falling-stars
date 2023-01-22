@@ -181,7 +181,7 @@ public class Main : MonoBehaviour
     if (sr != null)
     {
       float spriteWidth = sr.bounds.size.x;
-      float offset      = spriteWidth / 2.0f;
+      float offset = spriteWidth / 2.0f;
 
       _borders = new PairF(-hBorder + offset,
                            hBorder - offset);
@@ -192,6 +192,7 @@ public class Main : MonoBehaviour
     AppConfig.ReadConfig();
   }
 
+  Vector3 _goodStarLastSpawnPos = Vector3.zero;
   void SpawnStar(bool badStar)
   {
     int maxType = (int)Constants.StarType.SILVER;
@@ -200,11 +201,15 @@ public class Main : MonoBehaviour
                     (int)Constants.StarType.BAD :
                     Random.Range(0, maxType + 1);
 
-    int trajType = Random.Range(0, 3);
+    int trajType = (starType == (int)Constants.StarType.BAD) ?
+                   Random.Range(1, 3) :
+                   Random.Range(0, 3);
 
     PairF spawnX = (trajType == 0) ? _spawnX : _spawnTrajX;
 
-    float x = Random.Range(spawnX.Key, spawnX.Value);
+    float x = badStar ?
+              Random.Range(_goodStarLastSpawnPos.x - 0.5f, _goodStarLastSpawnPos.x + 0.5f) :
+              Random.Range(spawnX.Key, spawnX.Value);
 
     float angle = Random.Range(-Constants.StarFallSpreadAngle,
                                 Constants.StarFallSpreadAngle);
@@ -217,8 +222,11 @@ public class Main : MonoBehaviour
 
     Vector2 dir = new Vector2(s, -c);
 
+    _goodStarLastSpawnPos.x = x;
+    _goodStarLastSpawnPos.y = _spawnY;
+
     GameObject go = Instantiate(StarPrefab,
-      new Vector2(x, _spawnY),
+      _goodStarLastSpawnPos,
       Quaternion.identity,
       ObjectsHolder);
 
@@ -261,9 +269,9 @@ public class Main : MonoBehaviour
     float dy = Random.Range(-delta, delta);
 
     if (dx < 0) { dx = Mathf.Clamp(dx, -delta, -deltaMin); }
-    if (dx > 0) { dx = Mathf.Clamp(dx, deltaMin, delta);   }
+    if (dx > 0) { dx = Mathf.Clamp(dx, deltaMin, delta); }
     if (dy < 0) { dy = Mathf.Clamp(dy, -delta, -deltaMin); }
-    if (dy > 0) { dy = Mathf.Clamp(dy, deltaMin, delta);   }
+    if (dy > 0) { dy = Mathf.Clamp(dy, deltaMin, delta); }
 
     for (int i = 0; i < 3; i++)
     {
@@ -395,16 +403,16 @@ public class Main : MonoBehaviour
 
     _timerBad += Time.smoothDeltaTime;
 
-    if (_timerBad > _spawnTimeout * 1.5f)
-    {
-      SpawnStar(true);
-      _timerBad = 0.0f;
-    }
-
     if (_timer > _spawnTimeout)
     {
       SpawnStar(false);
       _timer = 0.0f;
+    }
+
+    if (_timerBad > _spawnTimeout)
+    {
+      SpawnStar(true);
+      _timerBad = 0.0f;
     }
 
     _spawnTimeout -= Time.smoothDeltaTime * Constants.SpawnTimeoutDecrementScale;
