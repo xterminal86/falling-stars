@@ -8,6 +8,7 @@ using TMPro;
 using Unity.Burst.CompilerServices;
 
 using PairF = System.Collections.Generic.KeyValuePair<float, float>;
+using static Constants;
 
 public class Main : MonoBehaviour
 {
@@ -30,7 +31,7 @@ public class Main : MonoBehaviour
   public List<Heart> Hearts;
 
   public GameObject StartWindow;
-  public GameObject RestartWindow;
+  public RectTransform RestartWindow;
   public GameObject TitleText;
   public GameObject BtnInfo;
   public GameObject BtnHighScores;
@@ -73,9 +74,51 @@ public class Main : MonoBehaviour
 
   public void OnRestartButton()
   {
-    RestartWindow.SetActive(false);
+    RestartWindow.gameObject.SetActive(false);
 
     SceneManager.LoadScene("main");
+  }
+
+  Vector3 _restartWindowPos = Vector3.zero;
+  IEnumerator GameOverScreenSlideRoutine()
+  {
+    float minPos = -64.0f;
+    float yStep = 32.0f;
+    float yStepQ = yStep * 0.25f;
+
+    int sh = Screen.height;
+
+    _restartWindowPos = RestartWindow.localPosition;
+
+    _restartWindowPos.y = sh;
+     
+    RestartWindow.localPosition = _restartWindowPos;
+
+    RestartWindow.gameObject.SetActive(true);
+
+    while (_restartWindowPos.y > minPos)
+    {
+      _restartWindowPos.y -= yStep;
+
+      _restartWindowPos.y = Mathf.Clamp(_restartWindowPos.y, minPos, Mathf.Infinity);
+
+      RestartWindow.localPosition = _restartWindowPos;
+
+      yield return null;
+    }
+
+    while (_restartWindowPos.y < 0.0f)
+    {
+      _restartWindowPos.y += yStepQ;
+
+      _restartWindowPos.y = Mathf.Clamp(_restartWindowPos.y, minPos, 0.0f);
+
+      RestartWindow.localPosition = _restartWindowPos;
+
+      yield return null;
+    }
+
+    yield return null;
   }
 
   int _lives = 5;
@@ -89,7 +132,7 @@ public class Main : MonoBehaviour
     if (_lives == 0)
     {
       _isGameOver = true;
-      RestartWindow.SetActive(true);
+      StartCoroutine(GameOverScreenSlideRoutine());
       SoundManager.Instance.PlaySound("game-over", 0.5f, 1.0f, false);
       AppConfig.AddHighscore(_score);
     }
@@ -188,6 +231,7 @@ public class Main : MonoBehaviour
     }
 
     //Debug.Log(string.Format("Borders: {0}", _borders));
+    //Debug.Log(string.Format("{0} {1}", Screen.width, Screen.height));
 
     AppConfig.ReadConfig();
   }
@@ -309,6 +353,28 @@ public class Main : MonoBehaviour
     Destroy(go, 3.0f);
   }
 
+  IEnumerator SpawnBubbleRoutine(Constants.StarType starType, int totalScore)
+  {
+    //
+    // This (for some fucking reason) saves us
+    // from lag when we instantiate bubble for the first time.
+    //
+    yield return null;
+
+    var obj = Instantiate(ScoreBubblePrefab,
+                          _scoreBubblePos,
+                          Quaternion.identity,
+                          ObjectsHolder);
+    ScoreBubble sb = obj.GetComponent<ScoreBubble>();
+    if (sb != null)
+    {
+      sb.Init(starType, totalScore);
+    }
+
+    yield return null;
+  }
+
+  Vector3 _scoreBubblePos = Vector3.zero;
   void CheckMouse()
   {
     if (Input.GetMouseButtonDown(0))
@@ -354,18 +420,16 @@ public class Main : MonoBehaviour
           if (starType != Constants.StarType.BAD)
           {
             var go = Instantiate(MouseClickEffectPrefab, objPos, Quaternion.identity, ObjectsHolder);
-            Destroy(go, 3.0f);
+            Destroy(go, 1.0f);
 
             float rndPitch = Random.Range(0.6f, 1.4f);
             SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch, false);
             ScoreAnimator.Play("score-pop", -1, 0.0f);
 
-            var obj = Instantiate(ScoreBubblePrefab, new Vector3(objPos.x, objPos.y + 0.5f, 0.0f), Quaternion.identity, ObjectsHolder);
-            ScoreBubble sb = obj.GetComponent<ScoreBubble>();
-            if (sb != null)
-            {
-              sb.Init(starType, totalScore);
-            }
+            _scoreBubblePos.x = objPos.x;
+            _scoreBubblePos.y = objPos.y + 0.5f;
+
+            StartCoroutine(SpawnBubbleRoutine(starType, totalScore));
           }
           else
           {
@@ -394,7 +458,7 @@ public class Main : MonoBehaviour
     {
       return;
     }
-
+        
     DbgTimeoutCounterText.text = _spawnTimeout.ToString("F3");
 
     CheckMouse();

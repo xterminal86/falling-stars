@@ -254,7 +254,7 @@ public class Star : MonoBehaviour
         }
         else
         {
-          float pitch = 1.25f * Constants.StarSpeedScaleByType[_starType];
+          float pitch = 1.0f * Constants.StarSpeedScaleByType[_starType];
           float volume = 0.4f * (pitch * 0.25f);
           SoundManager.Instance.PlaySound("star-break", volume, pitch);
         }

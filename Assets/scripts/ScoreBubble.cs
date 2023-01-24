@@ -3,6 +3,8 @@ using System.Collections.Generic;
 // =================================
 using UnityEngine;
 using TMPro;
+using static Constants;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class ScoreBubble : MonoBehaviour
 {
@@ -11,7 +13,7 @@ public class ScoreBubble : MonoBehaviour
   Color _textColor = Color.white;
 
   IEnumerator FadeRoutine()
-  {
+  {  
     while (_textColor.a > 0.0f)
     {
       Vector3 p = transform.position;
@@ -31,7 +33,7 @@ public class ScoreBubble : MonoBehaviour
 
     yield return null;
   }
-
+    
   public void Init(Constants.StarType starType, int score)
   {
     ScoreText.text = string.Format("+{0}", score);
