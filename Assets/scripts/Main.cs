@@ -459,7 +459,7 @@ public class Main : MonoBehaviour
       return;
     }
         
-    DbgTimeoutCounterText.text = _spawnTimeout.ToString("F3");
+    //DbgTimeoutCounterText.text = _spawnTimeout.ToString("F3");
 
     CheckMouse();
 
