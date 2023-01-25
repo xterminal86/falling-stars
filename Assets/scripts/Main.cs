@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 // =================================
 using TMPro;
-using Unity.Burst.CompilerServices;
 
 using PairF = System.Collections.Generic.KeyValuePair<float, float>;
 using static Constants;
@@ -152,8 +151,6 @@ public class Main : MonoBehaviour
       return;
     }
 
-    //float k = (float)_difficulty / 10.0f;
-    //_spawnTimeout = Constants.SpawnTimeoutInit - (Constants.SpawnTimeoutInit - 0.5f) * k;
     _spawnTimeout = Constants.SpawnTimeoutInit;
 
     //Debug.Log("spawn timeout: " + _spawnTimeout);
@@ -239,13 +236,13 @@ public class Main : MonoBehaviour
   Vector3 _goodStarLastSpawnPos = Vector3.zero;
   void SpawnStar(bool badStar)
   {
-    int maxType = (int)Constants.StarType.SILVER;
+    int maxType = (int)StarType.SILVER;
 
     int starType = badStar ?
-                    (int)Constants.StarType.BAD :
+                    (int)StarType.BAD :
                     Random.Range(0, maxType + 1);
 
-    int trajType = (starType == (int)Constants.StarType.BAD) ?
+    int trajType = (starType == (int)StarType.BAD) ?
                    Random.Range(1, 3) :
                    Random.Range(0, 3);
 
@@ -277,16 +274,16 @@ public class Main : MonoBehaviour
     Star star = go.GetComponent<Star>();
     if (star != null)
     {
-      Constants.StarType st = (Constants.StarType)starType;
-      Constants.StarTrajectory traj = (Constants.StarTrajectory)trajType;
+      StarType st = (StarType)starType;
+      StarTrajectory traj = (StarTrajectory)trajType;
 
       float speedScale = 1.0f;
 
-      if (st == Constants.StarType.BAD)
+      if (st == StarType.BAD)
       {
         int rndIndex = Random.Range(0, Constants.StarSpeedScaleByType.Count);
-        List<Constants.StarType> keyList = new List<Constants.StarType>(Constants.StarSpeedScaleByType.Keys);
-        Constants.StarType k = keyList[rndIndex];
+        List<StarType> keyList = new List<StarType>(Constants.StarSpeedScaleByType.Keys);
+        StarType k = keyList[rndIndex];
         speedScale = Constants.StarSpeedScaleByType[k];
       }
       else
@@ -353,7 +350,7 @@ public class Main : MonoBehaviour
     Destroy(go, 3.0f);
   }
 
-  IEnumerator SpawnBubbleRoutine(Constants.StarType starType, int totalScore)
+  IEnumerator SpawnBubbleRoutine(StarType starType, int totalScore)
   {
     //
     // This (for some fucking reason) saves us
@@ -401,7 +398,7 @@ public class Main : MonoBehaviour
           var starType = s.GetStarType();
           switch (starType)
           {
-            case Constants.StarType.BAD:
+            case StarType.BAD:
               DecrementLives();
               break;
 
@@ -417,7 +414,7 @@ public class Main : MonoBehaviour
           Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
           wp.z = 0.0f;
 
-          if (starType != Constants.StarType.BAD)
+          if (starType != StarType.BAD)
           {
             var go = Instantiate(MouseClickEffectPrefab, objPos, Quaternion.identity, ObjectsHolder);
             Destroy(go, 1.0f);

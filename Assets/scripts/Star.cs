@@ -5,6 +5,8 @@ using UnityEngine;
 
 using PairF = System.Collections.Generic.KeyValuePair<float, float>;
 
+using static Constants;
+
 public class Star : MonoBehaviour
 {
   public Transform InnerObject;
@@ -70,8 +72,8 @@ public class Star : MonoBehaviour
     col.color = g;
   }
 
-  Constants.StarType _starType = Constants.StarType.SILVER;
-  public Constants.StarType GetStarType()
+  StarType _starType = StarType.SILVER;
+  public StarType GetStarType()
   {
     return _starType;
   }
@@ -80,17 +82,17 @@ public class Star : MonoBehaviour
   {
     switch(_starTrajectory)
     {
-      case Constants.StarTrajectory.WAVE:
+      case StarTrajectory.WAVE:
         _wobbleSpeed = Random.Range(1, 6);
         _waveWidth = Random.Range(1.0f, 2.0f);
         break;
 
-      case Constants.StarTrajectory.CIRCLE:
+      case StarTrajectory.CIRCLE:
         _rotationSpeed = Random.Range(2, 7);
         _radius = Random.Range(0.25f, 1.0f);
         break;
 
-      case Constants.StarTrajectory.LINE:
+      case StarTrajectory.LINE:
         // Do nothing
         break;
     }
@@ -103,17 +105,17 @@ public class Star : MonoBehaviour
 
     switch(_starTrajectory)
     {
-      case Constants.StarTrajectory.WAVE:
+      case StarTrajectory.WAVE:
         int ww = Mathf.RoundToInt(_waveWidth);
         _additionalScore = (_wobbleSpeed + ww);
         break;
 
-      case Constants.StarTrajectory.CIRCLE:
+      case StarTrajectory.CIRCLE:
         int r = Mathf.RoundToInt(_radius);
         _additionalScore = (_rotationSpeed + r);
         break;
 
-      case Constants.StarTrajectory.LINE:
+      case StarTrajectory.LINE:
         // Do nothing
         break;
     }
@@ -126,12 +128,12 @@ public class Star : MonoBehaviour
     return _additionalScore;
   }
 
-  Constants.StarTrajectory _starTrajectory;
-  public void Init(Constants.StarType type,
+  StarTrajectory _starTrajectory;
+  public void Init(StarType type,
                     float angle,
                     Vector2 dir,
                     float speed,
-                    Constants.StarTrajectory trajectory = Constants.StarTrajectory.LINE)
+                    StarTrajectory trajectory = StarTrajectory.LINE)
   {
     _starType   = type;
     _direction  = dir;
@@ -147,23 +149,23 @@ public class Star : MonoBehaviour
 
     switch (type)
     {
-      case Constants.StarType.BAD:
+      case StarType.BAD:
         _spriteRenderer.sprite = SpriteRed;
         break;
 
-      case Constants.StarType.GREEN:
+      case StarType.GREEN:
         _spriteRenderer.sprite = SpriteGreen;
         break;
 
-      case Constants.StarType.CYAN:
+      case StarType.CYAN:
         _spriteRenderer.sprite = SpriteCyan;
         break;
 
-      case Constants.StarType.SILVER:
+      case StarType.SILVER:
         _spriteRenderer.sprite = SpriteSilver;
         break;
 
-      case Constants.StarType.YELLOW:
+      case StarType.YELLOW:
         _spriteRenderer.sprite = SpriteYellow;
         break;
     }
@@ -180,17 +182,17 @@ public class Star : MonoBehaviour
   {
     switch (_starTrajectory)
     {
-      case Constants.StarTrajectory.WAVE:
+      case StarTrajectory.WAVE:
         _adjustedBorderLeft  = _borders.Key + _waveWidth;
         _adjustedBorderRight = _borders.Value - _waveWidth;
         break;
 
-      case Constants.StarTrajectory.CIRCLE:
+      case StarTrajectory.CIRCLE:
         _adjustedBorderLeft  = _borders.Key + _radius;
         _adjustedBorderRight = _borders.Value - _radius;
         break;
 
-      case Constants.StarTrajectory.LINE:
+      case StarTrajectory.LINE:
         _adjustedBorderLeft = _borders.Key;
         _adjustedBorderRight = _borders.Value;
         break;
@@ -243,12 +245,12 @@ public class Star : MonoBehaviour
 
         _exploded = true;
 
-        if (_starType != Constants.StarType.BAD && !_mainRef.IsGameOver)
+        if (_starType != StarType.BAD && !_mainRef.IsGameOver)
         {
           _mainRef.DecrementLives();
         }
 
-        if (_starType == Constants.StarType.BAD)
+        if (_starType == StarType.BAD)
         {
           SoundManager.Instance.PlaySound("star-douse-eq", 0.5f);
         }
@@ -329,15 +331,15 @@ public class Star : MonoBehaviour
 
     switch (_starTrajectory)
     {
-      case Constants.StarTrajectory.WAVE:
+      case StarTrajectory.WAVE:
         AddWave();
         break;
 
-      case Constants.StarTrajectory.CIRCLE:
+      case StarTrajectory.CIRCLE:
         AddCircle();
         break;
 
-      case Constants.StarTrajectory.LINE:
+      case StarTrajectory.LINE:
         // Pass through
         break;
     }

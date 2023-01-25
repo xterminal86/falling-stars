@@ -3,8 +3,8 @@ using System.Collections.Generic;
 // =================================
 using UnityEngine;
 using TMPro;
+
 using static Constants;
-using UnityEngine.SocialPlatforms.Impl;
 
 public class ScoreBubble : MonoBehaviour
 {
@@ -34,7 +34,7 @@ public class ScoreBubble : MonoBehaviour
     yield return null;
   }
     
-  public void Init(Constants.StarType starType, int score)
+  public void Init(StarType starType, int score)
   {
     ScoreText.text = string.Format("+{0}", score);
 
