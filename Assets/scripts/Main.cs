@@ -3,6 +3,7 @@ using System.Collections.Generic;
 // =================================
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 // =================================
 using TMPro;
 
@@ -22,6 +23,10 @@ public class Main : MonoBehaviour
   public Transform ObjectsHolder;
 
   public Animator ScoreAnimator;
+  public Animator ClockAnimator;
+
+  public GameObject SpawnMeterHolder;
+  public Image SpawnMeter;
 
   public TMP_Text ScoreText;
   public TMP_Text DifficultyText;
@@ -67,6 +72,7 @@ public class Main : MonoBehaviour
     TitleText.SetActive(false);
     BtnInfo.SetActive(false);
     BtnHighScores.SetActive(false);
+    SpawnMeterHolder.SetActive(true);
 
     StartGame();
   }
@@ -90,7 +96,7 @@ public class Main : MonoBehaviour
     _restartWindowPos = RestartWindow.localPosition;
 
     _restartWindowPos.y = sh;
-     
+
     RestartWindow.localPosition = _restartWindowPos;
 
     RestartWindow.gameObject.SetActive(true);
@@ -131,6 +137,7 @@ public class Main : MonoBehaviour
     if (_lives == 0)
     {
       _isGameOver = true;
+      ClockAnimator.enabled = false;
       StartCoroutine(GameOverScreenSlideRoutine());
       SoundManager.Instance.PlaySound("game-over", 0.5f, 1.0f, false);
       AppConfig.AddHighscore(_score);
@@ -143,6 +150,8 @@ public class Main : MonoBehaviour
     get { return _isGameOver; }
   }
 
+  float _spawnRateNormalized = 0.0f;
+
   bool _gameStarted = false;
   void StartGame()
   {
@@ -152,6 +161,10 @@ public class Main : MonoBehaviour
     }
 
     _spawnTimeout = Constants.SpawnTimeoutInit;
+
+    _spawnRateNormalized = (_spawnTimeout - Constants.SpawnTimeoutMax) / (Constants.SpawnTimeoutInit - Constants.SpawnTimeoutMax);
+
+    SpawnMeter.fillAmount = 1.0f - _spawnRateNormalized;
 
     //Debug.Log("spawn timeout: " + _spawnTimeout);
 
@@ -175,7 +188,7 @@ public class Main : MonoBehaviour
     float groundPosY = -(Camera.main.orthographicSize - 0.5f);
 
     Vector3 pos = Vector3.zero;
-    for (float x = _groundSpan.x; x < _groundSpan.y; x++)
+    for (float x = _groundSpan.x - 1; x < _groundSpan.y + 1; x++)
     {
       pos.x = x;
       pos.y = groundPosY;
@@ -267,9 +280,9 @@ public class Main : MonoBehaviour
     _goodStarLastSpawnPos.y = _spawnY;
 
     GameObject go = Instantiate(StarPrefab,
-      _goodStarLastSpawnPos,
-      Quaternion.identity,
-      ObjectsHolder);
+                                 _goodStarLastSpawnPos,
+                                 Quaternion.identity,
+                                 ObjectsHolder);
 
     Star star = go.GetComponent<Star>();
     if (star != null)
@@ -371,6 +384,49 @@ public class Main : MonoBehaviour
     yield return null;
   }
 
+  float _rewindTo = 0.0f;
+  void CalculateTimeGracePeriod()
+  {
+    float grace = Constants.SpawnTimeoutInit - Constants.SpawnTimeoutMax;
+    grace *= 0.0625f;
+
+    _spawnTimeout += grace;
+
+    _spawnTimeout = Mathf.Clamp(_spawnTimeout,
+                                Constants.SpawnTimeoutMax,
+                                Constants.SpawnTimeoutInit);
+
+    _rewindTo = 1.0f - (_spawnTimeout - Constants.SpawnTimeoutMax) / (Constants.SpawnTimeoutInit - Constants.SpawnTimeoutMax);
+  }
+
+  bool _clockRewinding = false;
+  IEnumerator RewindClockRoutine()
+  {
+    _clockRewinding = true;
+
+    ClockAnimator.Play("clock-reverse");
+
+    float currentMeter = SpawnMeter.fillAmount;
+
+    CalculateTimeGracePeriod();
+
+    while (currentMeter > _rewindTo)
+    {
+      currentMeter -= Time.smoothDeltaTime * 0.125f;
+      currentMeter = Mathf.Clamp(currentMeter, 0.0f, 1.0f);
+
+      SpawnMeter.fillAmount = currentMeter;
+
+      yield return null;
+    }
+
+    ClockAnimator.Play("clock");
+
+    _clockRewinding = false;
+
+    yield return null;
+  }
+
   Vector3 _scoreBubblePos = Vector3.zero;
   void CheckMouse()
   {
@@ -430,6 +486,19 @@ public class Main : MonoBehaviour
           }
           else
           {
+            if (_lives != 0)
+            {
+              if (!_clockRewinding)
+              {
+                IEnumerator rewindTime = RewindClockRoutine();
+                StartCoroutine(rewindTime);
+              }
+              else
+              {
+                CalculateTimeGracePeriod();
+              }
+            }
+
             int index = Random.Range(1, 5);
             string soundName = string.Format("explode{0}", index);
             SoundManager.Instance.PlaySound(soundName);
@@ -455,13 +524,24 @@ public class Main : MonoBehaviour
     {
       return;
     }
-        
+
+    if (!_clockRewinding)
+    {
+      _spawnTimeout -= Time.smoothDeltaTime * Constants.SpawnTimeoutDecrementScale;
+
+      _spawnTimeout = Mathf.Clamp(_spawnTimeout,
+                                Constants.SpawnTimeoutMax,
+                                Constants.SpawnTimeoutInit);
+
+      _spawnRateNormalized = (_spawnTimeout - Constants.SpawnTimeoutMax) / (Constants.SpawnTimeoutInit - Constants.SpawnTimeoutMax);
+      SpawnMeter.fillAmount = 1.0f - _spawnRateNormalized;
+    }
+
     //DbgTimeoutCounterText.text = _spawnTimeout.ToString("F3");
 
     CheckMouse();
 
     _timer += Time.smoothDeltaTime;
-
     _timerBad += Time.smoothDeltaTime;
 
     if (_timer > _spawnTimeout)
@@ -475,11 +555,5 @@ public class Main : MonoBehaviour
       SpawnStar(true);
       _timerBad = 0.0f;
     }
-
-    _spawnTimeout -= Time.smoothDeltaTime * Constants.SpawnTimeoutDecrementScale;
-
-    _spawnTimeout = Mathf.Clamp(_spawnTimeout,
-                                Constants.SpawnTimeoutMax,
-                                Constants.SpawnTimeoutInit);
   }
 }

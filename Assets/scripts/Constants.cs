@@ -49,10 +49,10 @@ public static class Constants
 
   public static readonly Dictionary<StarType, float> StarSpeedScaleByType = new Dictionary<StarType, float>()
   {
-    { StarType.YELLOW, 2.25f },
+    { StarType.YELLOW, 2.0f  },
     { StarType.CYAN,   1.75f },
     { StarType.GREEN,  1.25f },
-    { StarType.SILVER, 0.75f }
+    { StarType.SILVER, 1.0f  }
   };
 
   public static readonly Dictionary<StarType, float> StarAdditionalScoreMultiplierByType = new Dictionary<StarType, float>()
