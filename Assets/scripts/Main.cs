@@ -30,7 +30,6 @@ public class Main : MonoBehaviour
 
   public TMP_Text ScoreText;
   public TMP_Text DifficultyText;
-  public TMP_Text DbgTimeoutCounterText;
 
   public List<Heart> Hearts;
 
@@ -536,8 +535,6 @@ public class Main : MonoBehaviour
       _spawnRateNormalized = (_spawnTimeout - Constants.SpawnTimeoutMax) / (Constants.SpawnTimeoutInit - Constants.SpawnTimeoutMax);
       SpawnMeter.fillAmount = 1.0f - _spawnRateNormalized;
     }
-
-    //DbgTimeoutCounterText.text = _spawnTimeout.ToString("F3");
 
     CheckMouse();
 

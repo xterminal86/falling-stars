@@ -35,15 +35,15 @@ public class Star : MonoBehaviour
   SpriteRenderer _spriteRenderer;
   CircleCollider2D _collider;
   void Awake()
-  {
-    var objects = GameObject.FindGameObjectsWithTag("MainScript");
-    if (objects.Length != 0)
+  {    
+    var mainRef = GameObject.FindGameObjectWithTag("MainScript");
+    if (mainRef != null)
     {
-      _mainRef = objects[0].GetComponent<Main>();
+      _mainRef = mainRef.GetComponent<Main>();
     }
     else
     {
-      Debug.LogWarning("MainScript not found!");
+      Debug.LogError("MainScript not found!");
     }
 
     _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
