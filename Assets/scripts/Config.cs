@@ -76,7 +76,7 @@ public class Config : MonoBehaviour
     //
     // Delete excess entries
     //
-    int toRemove = _highScores.Count - HighScoreEntries.Count;    
+    int toRemove = _highScores.Count - HighScoreEntries.Count;
     _highScores.RemoveRange(_highScores.Count - 1, toRemove);
 
     SaveHighScores();
@@ -189,7 +189,7 @@ public class Config : MonoBehaviour
     json[_highscoreConfigScoreKey]     = d.Score.ToString();
     json[_highscoreConfigTimestampKey] = d.Timestamp;
     return json.ToString();
-  }  
+  }
 
   public void WriteConfig()
   {

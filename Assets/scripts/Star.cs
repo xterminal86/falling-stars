@@ -14,7 +14,7 @@ public class Star : MonoBehaviour
   public ParticleSystem Shine;
   public ParticleSystem Trail;
 
-  public GameObject ExplosionPrefab;
+  public Explosion ExplosionPrefab;
 
   public Sprite SpriteRed;
   public Sprite SpriteGreen;
@@ -35,7 +35,7 @@ public class Star : MonoBehaviour
   SpriteRenderer _spriteRenderer;
   CircleCollider2D _collider;
   void Awake()
-  {    
+  {
     var mainRef = GameObject.FindGameObjectWithTag("MainScript");
     if (mainRef != null)
     {
@@ -235,19 +235,15 @@ public class Star : MonoBehaviour
 
       if (!_exploded)
       {
-        var go = Instantiate(ExplosionPrefab, InnerObject.position, Quaternion.identity);
-
-        Explosion ec = go.GetComponent<Explosion>();
-        if (ec != null)
-        {
-          ec.Explode(_color);
-        }
+        Explosion ec = Instantiate(ExplosionPrefab, InnerObject.position, Quaternion.identity);
+        ec.Explode(_color);
 
         _exploded = true;
 
         if (_starType != StarType.BAD && !_mainRef.IsGameOver)
         {
           _mainRef.DecrementLives();
+          _mainRef.ShatterOverlay(_starType);
         }
 
         if (_starType == StarType.BAD)
@@ -267,10 +263,10 @@ public class Star : MonoBehaviour
       Destroy(gameObject, 3.0f);
     }
   }
-    
+
   bool _starCaught = false;
   public void ProcessHit()
-  {    
+  {
     _starCaught = true;
     _spriteRenderer.enabled = false;
     _collider.enabled = false;

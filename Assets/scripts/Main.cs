@@ -15,10 +15,12 @@ public class Main : MonoBehaviour
   int _difficulty = 1;
   int _score = 0;
 
+  public Star StarPrefab;
+  public Explosion ExplosionPrefab;
+  public ScoreBubble ScoreBubblePrefab;
+
   public GameObject GroundCellPrefab;
-  public GameObject StarPrefab;
   public GameObject MouseClickEffectPrefab;
-  public GameObject ExplosionPrefab;
 
   public Transform ObjectsHolder;
 
@@ -26,10 +28,12 @@ public class Main : MonoBehaviour
   public Animator ClockAnimator;
 
   public GameObject SpawnMeterHolder;
-  public Image SpawnMeter;
 
   public TMP_Text ScoreText;
   public TMP_Text DifficultyText;
+
+  public Image SpawnMeter;
+  public Image ShatterEffect;
 
   public List<Heart> Hearts;
 
@@ -40,7 +44,6 @@ public class Main : MonoBehaviour
   public GameObject BtnHighScores;
 
   public GameObject TouchEffectPrefab;
-  public GameObject ScoreBubblePrefab;
 
   public ScreenShake ScreenShaker;
   public Config AppConfig;
@@ -123,6 +126,41 @@ public class Main : MonoBehaviour
     }
 
     yield return null;
+  }
+
+  IEnumerator ShowOverlayRoutine(StarType st)
+  {
+    Color overlayColor = StarColorsByType[st];
+    overlayColor.a = 0.5f;
+
+    while (overlayColor.a > 0.0f)
+    {
+      overlayColor.a -= Time.smoothDeltaTime;
+      ShatterEffect.color = overlayColor;
+      yield return null;
+    }
+
+    overlayColor.a = 0.0f;
+    ShatterEffect.color = overlayColor;
+
+    yield return null;
+  }
+
+  Color _none = new Color(0.0f, 0.0f, 0.0f, 0.0f);
+  Coroutine _coro;
+  public void ShatterOverlay(StarType st)
+  {
+    if (_lives >= 1)
+    {
+      if (_coro != null)
+      {
+        StopCoroutine(_coro);
+        ShatterEffect.color = _none;
+      }
+
+      var coro = ShowOverlayRoutine(st);
+      _coro = StartCoroutine(coro);
+    }
   }
 
   int _lives = 5;
@@ -278,37 +316,33 @@ public class Main : MonoBehaviour
     _goodStarLastSpawnPos.x = x;
     _goodStarLastSpawnPos.y = _spawnY;
 
-    GameObject go = Instantiate(StarPrefab,
-                                 _goodStarLastSpawnPos,
-                                 Quaternion.identity,
-                                 ObjectsHolder);
+    Star star = Instantiate(StarPrefab,
+                             _goodStarLastSpawnPos,
+                             Quaternion.identity,
+                             ObjectsHolder);
 
-    Star star = go.GetComponent<Star>();
-    if (star != null)
+    StarType st = (StarType)starType;
+    StarTrajectory traj = (StarTrajectory)trajType;
+
+    float speedScale = 1.0f;
+
+    if (st == StarType.BAD)
     {
-      StarType st = (StarType)starType;
-      StarTrajectory traj = (StarTrajectory)trajType;
-
-      float speedScale = 1.0f;
-
-      if (st == StarType.BAD)
-      {
-        int rndIndex = Random.Range(0, Constants.StarSpeedScaleByType.Count);
-        List<StarType> keyList = new List<StarType>(Constants.StarSpeedScaleByType.Keys);
-        StarType k = keyList[rndIndex];
-        speedScale = Constants.StarSpeedScaleByType[k];
-      }
-      else
-      {
-        speedScale = Constants.StarSpeedScaleByType[st];
-      }
-
-      star.Init(st,
-                angle,
-                dir,
-                Constants.StartSpeed * speedScale,
-                traj);
+      int rndIndex = Random.Range(0, Constants.StarSpeedScaleByType.Count);
+      List<StarType> keyList = new List<StarType>(Constants.StarSpeedScaleByType.Keys);
+      StarType k = keyList[rndIndex];
+      speedScale = Constants.StarSpeedScaleByType[k];
     }
+    else
+    {
+      speedScale = Constants.StarSpeedScaleByType[st];
+    }
+
+    star.Init(st,
+              angle,
+              dir,
+              Constants.StartSpeed * speedScale,
+              traj);
   }
 
   IEnumerator CaughtBadStarExplosionRoutine(Vector3 pointOfCreation)
@@ -340,13 +374,8 @@ public class Main : MonoBehaviour
         randomPos.y += dy;
       }
 
-      var go = Instantiate(ExplosionPrefab, randomPos, Quaternion.identity);
-
-      Explosion ec = go.GetComponent<Explosion>();
-      if (ec != null)
-      {
-        ec.Explode(Color.red);
-      }
+      Explosion ec = Instantiate(ExplosionPrefab, randomPos, Quaternion.identity);
+      ec.Explode(Color.red);
 
       yield return new WaitForSeconds(0.2f);
     }
@@ -370,15 +399,11 @@ public class Main : MonoBehaviour
     //
     yield return null;
 
-    var obj = Instantiate(ScoreBubblePrefab,
-                          _scoreBubblePos,
-                          Quaternion.identity,
-                          ObjectsHolder);
-    ScoreBubble sb = obj.GetComponent<ScoreBubble>();
-    if (sb != null)
-    {
-      sb.Init(starType, totalScore);
-    }
+    ScoreBubble sb = Instantiate(ScoreBubblePrefab,
+                                  _scoreBubblePos,
+                                  Quaternion.identity,
+                                  ObjectsHolder);
+    sb.Init(starType, totalScore);
 
     yield return null;
   }

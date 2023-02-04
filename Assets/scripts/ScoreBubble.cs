@@ -13,7 +13,7 @@ public class ScoreBubble : MonoBehaviour
   Color _textColor = Color.white;
 
   IEnumerator FadeRoutine()
-  {  
+  {
     while (_textColor.a > 0.0f)
     {
       Vector3 p = transform.position;
@@ -33,7 +33,7 @@ public class ScoreBubble : MonoBehaviour
 
     yield return null;
   }
-    
+
   public void Init(StarType starType, int score)
   {
     ScoreText.text = string.Format("+{0}", score);
