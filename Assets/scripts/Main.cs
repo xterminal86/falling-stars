@@ -130,7 +130,7 @@ public class Main : MonoBehaviour
 
   IEnumerator ShowOverlayRoutine(StarType st)
   {
-    Color overlayColor = StarColorsByType[st];
+    Color overlayColor = Color.red; //StarColorsByType[st];
     overlayColor.a = 0.5f;
 
     while (overlayColor.a > 0.0f)
@@ -150,7 +150,7 @@ public class Main : MonoBehaviour
   Coroutine _coro;
   public void ShatterOverlay(StarType st)
   {
-    if (_lives >= 1)
+    if (_lives > 0)
     {
       if (_coro != null)
       {
