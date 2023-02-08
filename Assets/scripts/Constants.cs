@@ -7,6 +7,8 @@ public static class Constants
 {
   public static readonly float BottomBorder = -4.0f;
 
+  public static readonly float TrollTimeoutInit = 30.0f;
+  public static readonly float TrollTimeoutMax = 5.0f;
   public static readonly float SpawnTimeoutInit = 2.0f;
   public static readonly float SpawnTimeoutMax = 0.25f;
   public static readonly float SpawnTimeoutDecrementScale = 0.0125f;

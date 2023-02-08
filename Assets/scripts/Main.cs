@@ -18,11 +18,13 @@ public class Main : MonoBehaviour
   public Star StarPrefab;
   public Explosion ExplosionPrefab;
   public ScoreBubble ScoreBubblePrefab;
+  public Troll TrollPrefab;
 
   public GameObject GroundCellPrefab;
   public GameObject MouseClickEffectPrefab;
 
   public Transform ObjectsHolder;
+  public Transform TrollCurtain;
 
   public Animator ScoreAnimator;
   public Animator ClockAnimator;
@@ -49,6 +51,7 @@ public class Main : MonoBehaviour
   public Config AppConfig;
 
   float _spawnTimeout = 0.0f;
+  float _trollTimeout = 0.0f;
 
   public void OnPlusButton()
   {
@@ -178,6 +181,7 @@ public class Main : MonoBehaviour
       StartCoroutine(GameOverScreenSlideRoutine());
       SoundManager.Instance.PlaySound("game-over", 0.5f, 1.0f, false);
       AppConfig.AddHighscore(_score);
+      TrollPrefab.TrollPlayer(0.0f, true);
     }
   }
 
@@ -198,6 +202,7 @@ public class Main : MonoBehaviour
     }
 
     _spawnTimeout = Constants.SpawnTimeoutInit;
+    _trollTimeout = Constants.TrollTimeoutInit;
 
     _spawnRateNormalized = (_spawnTimeout - Constants.SpawnTimeoutMax) / (Constants.SpawnTimeoutInit - Constants.SpawnTimeoutMax);
 
@@ -218,6 +223,10 @@ public class Main : MonoBehaviour
   PairF _spawnTrajX;
 
   float _spawnY;
+  public float SpawnY
+  {
+    get { return _spawnY; }
+  }
 
   Vector2 _groundSpan = Vector2.zero;
   void CreateGround()
@@ -232,6 +241,19 @@ public class Main : MonoBehaviour
 
       Instantiate(GroundCellPrefab, pos, Quaternion.identity, ObjectsHolder);
     }
+  }
+
+  StarType GetRandomGoodStar()
+  {
+    int maxType = (int)StarType.SILVER;
+    int starType = Random.Range(0, maxType + 1);
+    return (StarType)starType;
+  }
+
+  StarTrajectory GetRandomTrajectory()
+  {
+    int r = Random.Range(0, (int)StarTrajectory.CIRCLE + 1);
+    return (StarTrajectory)r;
   }
 
   void Awake()
@@ -256,6 +278,13 @@ public class Main : MonoBehaviour
     //Debug.Log(string.Format("SpawnTrajX: {0}", _spawnTrajX));
 
     groundSpanX = Mathf.Round(groundSpanX) + 2.0f;
+
+    Vector3 curtainScale = TrollCurtain.localScale;
+    TrollCurtain.localScale = new Vector3(groundSpanX * 2.0f,
+                                           curtainScale.y,
+                                           curtainScale.z);
+
+    //Debug.Log(string.Format("groundSpanX: {0}", groundSpanX));
 
     _groundSpan.x = -groundSpanX;
     _groundSpan.y = groundSpanX;
@@ -283,16 +312,85 @@ public class Main : MonoBehaviour
     AppConfig.ReadConfig();
   }
 
+  Vector2 _rndDir = Vector2.zero;
+  public Vector2 GetRandomDir()
+  {
+    float angle = Random.Range(-Constants.StarFallSpreadAngle,
+                                 Constants.StarFallSpreadAngle);
+
+    float s = Mathf.Sin(angle * Mathf.Deg2Rad);
+    float c = Mathf.Cos(angle * Mathf.Deg2Rad);
+
+    _rndDir.x = s;
+    _rndDir.y = -c;
+
+    return _rndDir;
+  }
+
+  Vector3 _starDir = Vector3.zero;
+
+  Vector3 _trollStarSpawnPos = Vector3.zero;
+  public void SpawnTrollStars(bool playerLost = false)
+  {
+    bool shouldBeGood = playerLost ? true : (Random.Range(0, 2) == 0);
+
+    float speed = shouldBeGood ?
+                   Random.Range(2.0f, 3.0f) :
+                   Random.Range(3.0f, 5.0f);
+
+    bool allTrajsRandom = playerLost ? true : (Random.Range(0, 2) == 0);
+
+    bool allDirsRandom = playerLost ? true : (Random.Range(0, 2) == 0);
+
+    StarTrajectory traj = GetRandomTrajectory();
+
+    float angle = Random.Range(-Constants.StarFallSpreadAngle,
+                                 Constants.StarFallSpreadAngle);
+
+    if (Random.Range(0, 2) == 0)
+    {
+      float s = Mathf.Sin(angle * Mathf.Deg2Rad);
+      float c = Mathf.Cos(angle * Mathf.Deg2Rad);
+
+      _starDir.x = s;
+      _starDir.y = -c;
+    }
+    else
+    {
+      _starDir.x = 0.0f;
+      _starDir.y = -1.0f;
+    }
+
+    _trollStarSpawnPos.x = _spawnTrajX.Key;
+    _trollStarSpawnPos.y = _spawnY;
+
+    float step = shouldBeGood ? 2.0f : 1.0f;
+
+    for (float x = _spawnTrajX.Key; x <= _spawnTrajX.Value; x += step)
+    {
+      _trollStarSpawnPos.x = x;
+
+      Star star = Instantiate(StarPrefab,
+                              _trollStarSpawnPos,
+                              Quaternion.identity,
+                              ObjectsHolder);
+
+      StarType st = shouldBeGood ? GetRandomGoodStar() : StarType.BAD;
+
+      star.Init(st,
+                angle,
+                allDirsRandom ? GetRandomDir() : _starDir,
+                speed,
+                allTrajsRandom ? GetRandomTrajectory() : traj);
+    }
+  }
+
   Vector3 _goodStarLastSpawnPos = Vector3.zero;
   void SpawnStar(bool badStar)
   {
-    int maxType = (int)StarType.SILVER;
+    StarType st = badStar ? StarType.BAD : GetRandomGoodStar();
 
-    int starType = badStar ?
-                    (int)StarType.BAD :
-                    Random.Range(0, maxType + 1);
-
-    int trajType = (starType == (int)StarType.BAD) ?
+    int trajType = (st == StarType.BAD) ?
                    Random.Range(1, 3) :
                    Random.Range(0, 3);
 
@@ -321,7 +419,6 @@ public class Main : MonoBehaviour
                              Quaternion.identity,
                              ObjectsHolder);
 
-    StarType st = (StarType)starType;
     StarTrajectory traj = (StarTrajectory)trajType;
 
     float speedScale = 1.0f;
@@ -451,6 +548,74 @@ public class Main : MonoBehaviour
     yield return null;
   }
 
+  void PunchTroll(Troll t)
+  {
+    t.PunchTroll();
+  }
+
+  void ProcessStar(Star s, Vector3 hitPos)
+  {
+    Vector3 objPos = hitPos;
+
+    int totalScore = 0;
+
+    var starType = s.GetStarType();
+    switch (starType)
+    {
+      case StarType.BAD:
+        DecrementLives();
+        break;
+
+      default:
+        totalScore = Constants.StarScoreByType[starType] + s.GetAdditionalScore();
+        _score += totalScore;
+        ScoreText.text = _score.ToString();
+        break;
+    }
+
+    s.ProcessHit();
+
+    Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+    wp.z = 0.0f;
+
+    if (starType != StarType.BAD)
+    {
+      var go = Instantiate(MouseClickEffectPrefab, objPos, Quaternion.identity, ObjectsHolder);
+      Destroy(go, 1.0f);
+
+      float rndPitch = Random.Range(0.6f, 1.4f);
+      SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch, false);
+      ScoreAnimator.Play("score-pop", -1, 0.0f);
+
+      _scoreBubblePos.x = objPos.x;
+      _scoreBubblePos.y = objPos.y + 0.5f;
+
+      StartCoroutine(SpawnBubbleRoutine(starType, totalScore));
+    }
+    else
+    {
+      if (_lives != 0)
+      {
+        if (!_clockRewinding)
+        {
+          IEnumerator rewindTime = RewindClockRoutine();
+          StartCoroutine(rewindTime);
+        }
+        else
+        {
+          CalculateTimeGracePeriod();
+        }
+      }
+
+      int index = Random.Range(1, 5);
+      string soundName = string.Format("explode{0}", index);
+      SoundManager.Instance.PlaySound(soundName);
+      IEnumerator coro = CaughtBadStarExplosionRoutine(objPos);
+      StartCoroutine(coro);
+      ScreenShaker.ShakeScreen();
+    }
+  }
+
   Vector3 _scoreBubblePos = Vector3.zero;
   void CheckMouse()
   {
@@ -458,77 +623,27 @@ public class Main : MonoBehaviour
     {
       Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-      int mask = LayerMask.GetMask("stars");
+      int mask = LayerMask.GetMask("stars", "troll", "curtain");
 
       RaycastHit2D hit = Physics2D.GetRayIntersection(ray, Mathf.Infinity, mask);
 
       if (hit.collider != null)
       {
-        Star s = hit.collider.gameObject.GetComponentInParent<Star>();
-        //
-        // Prevent scoring via mouse click and losing score due to miss
-        // if clicked at the same time as star hit the ground.
-        //
-        if (s != null && !s.Exploded)
+        Troll t = hit.collider.gameObject.GetComponentInParent<Troll>();
+        if (t != null)
         {
-          Vector3 objPos = hit.collider.gameObject.transform.position;
-
-          int totalScore = 0;
-
-          var starType = s.GetStarType();
-          switch (starType)
+          PunchTroll(t);
+        }
+        else
+        {
+          Star s = hit.collider.gameObject.GetComponentInParent<Star>();
+          //
+          // Prevent scoring via mouse click and losing score due to miss
+          // if clicked at the same time as star hit the ground.
+          //
+          if (s != null && !s.Exploded)
           {
-            case StarType.BAD:
-              DecrementLives();
-              break;
-
-            default:
-              totalScore = Constants.StarScoreByType[starType] + s.GetAdditionalScore();
-              _score += totalScore;
-              ScoreText.text = _score.ToString();
-              break;
-          }
-
-          s.ProcessHit();
-
-          Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-          wp.z = 0.0f;
-
-          if (starType != StarType.BAD)
-          {
-            var go = Instantiate(MouseClickEffectPrefab, objPos, Quaternion.identity, ObjectsHolder);
-            Destroy(go, 1.0f);
-
-            float rndPitch = Random.Range(0.6f, 1.4f);
-            SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch, false);
-            ScoreAnimator.Play("score-pop", -1, 0.0f);
-
-            _scoreBubblePos.x = objPos.x;
-            _scoreBubblePos.y = objPos.y + 0.5f;
-
-            StartCoroutine(SpawnBubbleRoutine(starType, totalScore));
-          }
-          else
-          {
-            if (_lives != 0)
-            {
-              if (!_clockRewinding)
-              {
-                IEnumerator rewindTime = RewindClockRoutine();
-                StartCoroutine(rewindTime);
-              }
-              else
-              {
-                CalculateTimeGracePeriod();
-              }
-            }
-
-            int index = Random.Range(1, 5);
-            string soundName = string.Format("explode{0}", index);
-            SoundManager.Instance.PlaySound(soundName);
-            IEnumerator coro = CaughtBadStarExplosionRoutine(objPos);
-            StartCoroutine(coro);
-            ScreenShaker.ShakeScreen();
+            ProcessStar(s, hit.collider.transform.position);
           }
         }
       }
@@ -541,6 +656,7 @@ public class Main : MonoBehaviour
 
   float _timer = 0.0f;
   float _timerBad = 0.0f;
+  float _timerTroll = 0.0f;
 
   void Update()
   {
@@ -561,15 +677,26 @@ public class Main : MonoBehaviour
       SpawnMeter.fillAmount = 1.0f - _spawnRateNormalized;
     }
 
+    float t = (1.0f - _spawnRateNormalized);
+    _trollTimeout = Mathf.Lerp(Constants.TrollTimeoutInit, Constants.TrollTimeoutMax, t);
+
     CheckMouse();
 
     _timer += Time.smoothDeltaTime;
     _timerBad += Time.smoothDeltaTime;
+    _timerTroll += Time.smoothDeltaTime;
 
     if (_timer > _spawnTimeout)
     {
       SpawnStar(false);
       _timer = 0.0f;
+    }
+
+    if (_timerTroll > _trollTimeout)
+    {
+      float x = Random.Range(_spawnX.Key, _spawnX.Value);
+      TrollPrefab.TrollPlayer(x);
+      _timerTroll = 0.0f;
     }
 
     if (_timerBad > _spawnTimeout)
