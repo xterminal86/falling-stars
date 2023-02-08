@@ -334,9 +334,7 @@ public class Main : MonoBehaviour
   {
     bool shouldBeGood = playerLost ? true : (Random.Range(0, 2) == 0);
 
-    float speed = shouldBeGood ?
-                   Random.Range(2.0f, 3.0f) :
-                   Random.Range(3.0f, 5.0f);
+    float speed = shouldBeGood ? 1.25f : Random.Range(2.0f, 4.0f);
 
     bool allTrajsRandom = playerLost ? true : (Random.Range(0, 2) == 0);
 
@@ -664,6 +662,13 @@ public class Main : MonoBehaviour
     {
       return;
     }
+
+    #if UNITY_EDITOR
+    if (Input.GetKeyDown(KeyCode.Space))
+    {
+      SpawnTrollStars();
+    }
+    #endif
 
     if (!_clockRewinding)
     {
