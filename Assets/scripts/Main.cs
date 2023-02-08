@@ -53,6 +53,10 @@ public class Main : MonoBehaviour
   float _spawnTimeout = 0.0f;
   float _trollTimeout = 0.0f;
 
+  #if UNITY_EDITOR
+  public bool GodMode = false;
+  #endif
+
   public void OnPlusButton()
   {
     _difficulty++;
@@ -172,7 +176,14 @@ public class Main : MonoBehaviour
     int guiIndex = Hearts.Count - _lives;
     Hearts[guiIndex].FadeAway();
 
+    #if UNITY_EDITOR
+    if (!GodMode)
+    {
+      _lives--;
+    }
+    #else
     _lives--;
+    #endif
 
     if (_lives == 0)
     {
@@ -310,6 +321,16 @@ public class Main : MonoBehaviour
     //Debug.Log(string.Format("{0} {1}", Screen.width, Screen.height));
 
     AppConfig.ReadConfig();
+
+    //
+    // NOTE:
+    //
+    // TMPro 3D text causes lag spike on first instantiation,
+    // so to fix this you have to create TMPro text UI element
+    // somewhere in the scene and type all characters
+    // you're going to use in it.
+    // To hide this element you can set alpha of text color to 0.
+    //
   }
 
   Vector2 _rndDir = Vector2.zero;
@@ -486,23 +507,6 @@ public class Main : MonoBehaviour
     Destroy(go, 3.0f);
   }
 
-  IEnumerator SpawnBubbleRoutine(StarType starType, int totalScore)
-  {
-    //
-    // This (for some fucking reason) saves us
-    // from lag when we instantiate bubble for the first time.
-    //
-    yield return null;
-
-    ScoreBubble sb = Instantiate(ScoreBubblePrefab,
-                                  _scoreBubblePos,
-                                  Quaternion.identity,
-                                  ObjectsHolder);
-    sb.Init(starType, totalScore);
-
-    yield return null;
-  }
-
   float _rewindTo = 0.0f;
   void CalculateTimeGracePeriod()
   {
@@ -588,7 +592,12 @@ public class Main : MonoBehaviour
       _scoreBubblePos.x = objPos.x;
       _scoreBubblePos.y = objPos.y + 0.5f;
 
-      StartCoroutine(SpawnBubbleRoutine(starType, totalScore));
+      ScoreBubble sb = Instantiate(ScoreBubblePrefab,
+                                  _scoreBubblePos,
+                                  Quaternion.identity,
+                                  ObjectsHolder);
+
+      sb.Init(starType, totalScore);
     }
     else
     {
