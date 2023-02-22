@@ -612,7 +612,7 @@ public class Main : MonoBehaviour
 
     while (currentMeter > _rewindTo)
     {
-      currentMeter -= Time.smoothDeltaTime * 0.125f;
+      currentMeter -= Time.unscaledDeltaTime * 0.125f;
       currentMeter = Mathf.Clamp(currentMeter, 0.0f, 1.0f);
 
       //SpawnMeter.fillAmount = currentMeter;
@@ -924,6 +924,7 @@ public class Main : MonoBehaviour
 
     if (!_timeStopped && Input.GetKeyDown(KeyCode.T))
     {
+      _timeStopped = true;
       ZaWarudo();
     }
 
