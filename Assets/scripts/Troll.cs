@@ -85,7 +85,8 @@ public class Troll : MonoBehaviour
   }
 
   float _flySpeed = 20.0f;
-  float _spinSpeed = 5.0f;
+  //float _spinSpeed = 5.0f;
+  float _spinSpeed = 500.0f;
 
   Vector3 _flyDir = Vector3.zero;
 
@@ -117,13 +118,27 @@ public class Troll : MonoBehaviour
 
       if (spinCCW)
       {
-        rotation.z += _spinSpeed; //_spinSpeed * Time.smoothDeltaTime;
+        //rotation.z += _spinSpeed;
+        rotation.z += _spinSpeed * Time.smoothDeltaTime;
       }
       else
       {
-        rotation.z += -_spinSpeed; //_spinSpeed * -Time.smoothDeltaTime;
+        //rotation.z += -_spinSpeed;
+        rotation.z += -_spinSpeed * Time.smoothDeltaTime;
       }
 
+      //
+      // Because position increment is dependent on deltaTime
+      // due to fluctuations of delta time, there might be situations
+      // where if speed is big enough previous position increment might be
+      // not enough to pass the direction change check,
+      // but on the next frame position increment might be well after
+      // we crossed the border and subsequent position increment
+      // after direction change might not be enough to leave said border,
+      // so we will be stuck in infinite direction change loop.
+      //
+      // That's why we rely on actual direction as additional condition variable.
+      //
       bool switchDir = (pos.x < _mainRef.Borders.Key && _flyDir.x < 0.0f)
                      || (pos.x > _mainRef.Borders.Value && _flyDir.x > 0.0f);
 

@@ -13,8 +13,11 @@ public static class Constants
   public static readonly float SpawnTimeoutMax = 0.25f;
   public static readonly float SpawnTimeoutDecrementScale = 0.0125f;
   public static readonly float StartSpeed = 2.0f;
-
+  public static readonly float CloudsAlpha = 0.1f;
   public static readonly float StarFallSpreadAngle = 60.0f;
+
+  public static readonly int StoppedTimeDuration = 8;
+  public static readonly float TheWorldRecharge = 30.0f;
 
   public enum StarType
   {

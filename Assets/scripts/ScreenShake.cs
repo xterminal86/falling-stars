@@ -20,7 +20,7 @@ public class ScreenShake : MonoBehaviour
 
       Camera.main.transform.position = _cameraPos;
 
-      secondsPassed += Time.smoothDeltaTime;
+      secondsPassed += Time.unscaledDeltaTime;
 
       yield return null;
     }

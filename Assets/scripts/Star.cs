@@ -80,13 +80,14 @@ public class Star : MonoBehaviour
     switch(_starTrajectory)
     {
       case StarTrajectory.WAVE:
-        _wobbleSpeed = Random.Range(1, 6);
+        //_wobbleSpeed = Random.Range(1, 6);
         _waveWidth = Random.Range(1.0f, 2.0f);
         break;
 
       case StarTrajectory.CIRCLE:
-        _rotationSpeed = Random.Range(2, 7);
-        _radius = Random.Range(0.25f, 1.0f);
+        //_rotationSpeed = Random.Range(2, 7);
+        //_radius = Random.Range(0.25f, 1.0f);
+        _radius = Random.Range(0.5f, 2.0f);
         break;
 
       case StarTrajectory.LINE:
@@ -104,12 +105,14 @@ public class Star : MonoBehaviour
     {
       case StarTrajectory.WAVE:
         int ww = Mathf.RoundToInt(_waveWidth);
-        _additionalScore = (_wobbleSpeed + ww);
+        //_additionalScore = (_wobbleSpeed + ww);
+        _additionalScore = ww;
         break;
 
       case StarTrajectory.CIRCLE:
         int r = Mathf.RoundToInt(_radius);
-        _additionalScore = (_rotationSpeed + r);
+        //_additionalScore = (_rotationSpeed + r);
+        _additionalScore = (r < 1) ? 1 : r;
         break;
 
       case StarTrajectory.LINE:
@@ -137,6 +140,13 @@ public class Star : MonoBehaviour
     _speed      = speed;
 
     _starTrajectory = trajectory;
+
+    // Because circular movement adds up with direction
+    // thus making overall movement too fast and accelerated.
+    if (_starTrajectory == StarTrajectory.CIRCLE)
+    {
+      _speed = 1.0f;
+    }
 
     RandomizeTrajectory();
 
@@ -202,7 +212,6 @@ public class Star : MonoBehaviour
     get { return _exploded; }
   }
 
-  Vector3 _tmpPos = Vector3.zero;
   PairF _borders;
   void CheckBorders()
   {
@@ -210,18 +219,12 @@ public class Star : MonoBehaviour
 
     AdjustBorders();
 
-    if (transform.position.x < _adjustedBorderLeft)
+    bool toggleDirection =
+      (_direction.x < 0 && transform.position.x < _adjustedBorderLeft)
+   || (_direction.x > 0 && transform.position.x > _adjustedBorderRight);
+
+    if (toggleDirection)
     {
-      _tmpPos = transform.position;
-      _tmpPos.x = _adjustedBorderLeft;
-      transform.position = _tmpPos;
-      _direction.x *= -1;
-    }
-    else if (transform.position.x > _adjustedBorderRight)
-    {
-      _tmpPos = transform.position;
-      _tmpPos.x = _adjustedBorderRight;
-      transform.position = _tmpPos;
       _direction.x *= -1;
     }
 
@@ -276,22 +279,35 @@ public class Star : MonoBehaviour
 
   Vector3 _innerObjectPos = Vector3.zero;
 
-  int _angle = 0;
+  float _angleIncreaseScale = 200.0f;
+
+  //int _angle = 0;
+  float _angleF = 0.0f;
 
   float _sinResult = 0.0f;
   float _cosResult = 0.0f;
 
-  int _rotationSpeed = 4;
-  float _radius = 1.5f;
+  //int _rotationSpeed = 4;
+  float _radius = 3.0f;
   void AddCircle()
   {
     _innerObjectPos = InnerObject.localPosition;
 
-    _sinResult = Mathf.Sin(_angle * Mathf.Deg2Rad);
-    _cosResult = Mathf.Cos(_angle * Mathf.Deg2Rad);
+    //_sinResult = Mathf.Sin(_angle * Mathf.Deg2Rad);
+    //_cosResult = Mathf.Cos(_angle * Mathf.Deg2Rad);
 
-    _angle += _rotationSpeed;
-    _angle %= 360;
+    _sinResult = Mathf.Sin(_angleF * Mathf.Deg2Rad);
+    _cosResult = Mathf.Cos(_angleF * Mathf.Deg2Rad);
+
+    _angleF += Time.smoothDeltaTime * _angleIncreaseScale;
+
+    if (_angleF > 360.0f)
+    {
+      _angleF -= 360.0f;
+    }
+
+    //_angle += _rotationSpeed;
+    //_angle %= 360;
 
     _innerObjectPos.x = (_sinResult * _radius);
     _innerObjectPos.y = (_cosResult * _radius);
@@ -300,15 +316,23 @@ public class Star : MonoBehaviour
   }
 
   float _waveWidth = 1.0f;
-  int _wobbleSpeed = 10;
+  //int _wobbleSpeed = 10;
   void AddWave()
   {
     _innerObjectPos = InnerObject.localPosition;
 
-    _sinResult = Mathf.Sin(_angle * Mathf.Deg2Rad);
+    //_sinResult = Mathf.Sin(_angle * Mathf.Deg2Rad);
+    _sinResult = Mathf.Sin(_angleF * Mathf.Deg2Rad);
 
-    _angle += _wobbleSpeed;
-    _angle %= 360;
+    _angleF += Time.smoothDeltaTime * _angleIncreaseScale;
+
+    if (_angleF > 360.0f)
+    {
+      _angleF -= 360.0f;
+    }
+
+    //_angle += _wobbleSpeed;
+    //_angle %= 360;
 
     _innerObjectPos.x = (_sinResult * _waveWidth);
 
@@ -349,7 +373,7 @@ public class Star : MonoBehaviour
 
   void Update()
   {
-    if (_exploded || _starCaught)
+    if (_exploded || _starCaught || _mainRef.TimeStopped)
     {
       return;
     }

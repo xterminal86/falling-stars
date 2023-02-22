@@ -18,11 +18,11 @@ public class ScoreBubble : MonoBehaviour
     {
       Vector3 p = transform.position;
 
-      p.y += Time.smoothDeltaTime;
+      p.y += Time.unscaledDeltaTime;
 
       transform.position = p;
 
-      _textColor.a -= Time.smoothDeltaTime * 0.85f;
+      _textColor.a -= Time.unscaledDeltaTime * 0.85f;
 
       ScoreText.color = _textColor;
 

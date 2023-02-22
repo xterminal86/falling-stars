@@ -138,7 +138,7 @@ public class SoundManager : MonoSingleton<SoundManager>
     }
   }
 
-  public void PlaySound(string name, float volume = 1.0f, float pitch = 1.0f, bool instantiate = true)
+  public void PlaySound(string name, float volume = 1.0f, float pitch = 1.0f, bool instantiate = true, bool bypassEffects = false)
   {
     if (_audioSourcesByName.ContainsKey(name))
     {
@@ -150,6 +150,7 @@ public class SoundManager : MonoSingleton<SoundManager>
         a.playOnAwake = false;
         a.volume = volume * SoundVolume;
         a.clip = _audioSourcesByName[name].clip;
+        a.bypassListenerEffects = bypassEffects;
         a.pitch = pitch;
         float length = a.clip.length + 1.0f;
         a.Play();
@@ -157,6 +158,7 @@ public class SoundManager : MonoSingleton<SoundManager>
       }
       else
       {
+        _audioSourcesByName[name].bypassListenerEffects = bypassEffects;
         _audioSourcesByName[name].pitch = pitch;
         _audioSourcesByName[name].volume = volume * SoundVolume;
         _audioSourcesByName[name].Play();

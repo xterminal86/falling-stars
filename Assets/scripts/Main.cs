@@ -15,47 +15,96 @@ public class Main : MonoBehaviour
   int _difficulty = 1;
   int _score = 0;
 
+  [Header("Main Objects")]
   public Star StarPrefab;
   public Explosion ExplosionPrefab;
   public ScoreBubble ScoreBubblePrefab;
   public Troll TrollPrefab;
 
+  [Header("Scene Props")]
   public GameObject GroundCellPrefab;
   public GameObject MouseClickEffectPrefab;
 
+  [Header("Transforms")]
   public Transform ObjectsHolder;
   public Transform TrollCurtain;
 
+  [Header("Animators")]
   public Animator ScoreAnimator;
   public Animator ClockAnimator;
+  public Animator ZaWarudoAnimator;
 
+  [Header("Clock")]
   public GameObject SpawnMeterHolder;
 
+  [Header("TMP_Text")]
   public TMP_Text ScoreText;
   public TMP_Text DifficultyText;
+  public TMP_Text StoppedTimeLeftText;
 
+  // DEBUG
+  [Header("Debug")]
+  public TMP_Text CyanScore;
+  public TMP_Text SilverScore;
+  public TMP_Text GreenScore;
+  public TMP_Text YellowScore;
+
+  [Header("Clock bar")]
   public Image SpawnMeter;
+
+  [Header("Star shatter cue")]
   public Image ShatterEffect;
 
+  [Header("Player lives")]
   public List<Heart> Hearts;
 
+  [Header("GUI")]
   public GameObject StartWindow;
   public RectTransform RestartWindow;
+  public RectTransform TimeStopLeftHolder;
+  public RectTransform EvilStar;
+  public RectTransform TheWorldHolder;
+  public Image TimeStopClockIcon;
+  public Image TheWorldReadyImage;
+  public Image TheWorldReadyBorder;
   public GameObject TitleText;
   public GameObject BtnInfo;
   public GameObject BtnHighScores;
+  public Slider SpawnMeterSlider;
 
+  [Header("Touch effect")]
   public GameObject TouchEffectPrefab;
 
+  [Header("Screen shaker")]
   public ScreenShake ScreenShaker;
+
+  [Header("App config")]
   public Config AppConfig;
+
+  [Header("Audio filters")]
+  public AudioReverbFilter ReverbFilter;
+  public AudioLowPassFilter LowPassFilter;
+
+  [Header("Time stop clouds")]
+  public SpriteRenderer Clouds;
 
   float _spawnTimeout = 0.0f;
   float _trollTimeout = 0.0f;
 
-  #if UNITY_EDITOR
+#if UNITY_EDITOR
+  [Header("Editor only")]
   public bool GodMode = false;
-  #endif
+#endif
+
+  Dictionary<StarType, int> _scoreByStarType = new Dictionary<StarType, int>()
+  {
+    { StarType.CYAN,   0 },
+    { StarType.GREEN,  0 },
+    { StarType.SILVER, 0 },
+    { StarType.YELLOW, 0 }
+  };
+
+  Dictionary<StarType, TMP_Text> _scoreFieldByStarType = new Dictionary<StarType, TMP_Text>();
 
   public void OnPlusButton()
   {
@@ -81,7 +130,10 @@ public class Main : MonoBehaviour
     TitleText.SetActive(false);
     BtnInfo.SetActive(false);
     BtnHighScores.SetActive(false);
-    SpawnMeterHolder.SetActive(true);
+    //SpawnMeterHolder.SetActive(true);
+    SpawnMeterSlider.gameObject.SetActive(true);
+    EvilStar.gameObject.SetActive(true);
+    TheWorldHolder.gameObject.SetActive(true);
 
     StartGame();
   }
@@ -176,17 +228,30 @@ public class Main : MonoBehaviour
     int guiIndex = Hearts.Count - _lives;
     Hearts[guiIndex].FadeAway();
 
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     if (!GodMode)
     {
       _lives--;
     }
-    #else
+#else
     _lives--;
-    #endif
+#endif
 
     if (_lives == 0)
     {
+      if (_timeStopped)
+      {
+        StopCoroutine(_timeStoppedCoro);
+        TimeStopLeftHolder.gameObject.SetActive(false);
+        _timeStopped = false;
+
+        if (!_timeResumeWorking)
+        {
+          var coro = TimeResumeRoutine();
+          _timeResumeCoro = StartCoroutine(coro);
+        }
+      }
+
       _isGameOver = true;
       ClockAnimator.enabled = false;
       StartCoroutine(GameOverScreenSlideRoutine());
@@ -215,9 +280,13 @@ public class Main : MonoBehaviour
     _spawnTimeout = Constants.SpawnTimeoutInit;
     _trollTimeout = Constants.TrollTimeoutInit;
 
-    _spawnRateNormalized = (_spawnTimeout - Constants.SpawnTimeoutMax) / (Constants.SpawnTimeoutInit - Constants.SpawnTimeoutMax);
+    _spawnRateNormalized = GetNormalizedValue(_spawnTimeout,
+                                               Constants.SpawnTimeoutMax,
+                                               Constants.SpawnTimeoutInit);
 
     SpawnMeter.fillAmount = 1.0f - _spawnRateNormalized;
+
+    SpawnMeterSlider.value = 1.0f - _spawnRateNormalized;
 
     //Debug.Log("spawn timeout: " + _spawnTimeout);
 
@@ -322,6 +391,11 @@ public class Main : MonoBehaviour
 
     AppConfig.ReadConfig();
 
+    _scoreFieldByStarType[StarType.CYAN]   = CyanScore;
+    _scoreFieldByStarType[StarType.SILVER] = SilverScore;
+    _scoreFieldByStarType[StarType.GREEN]  = GreenScore;
+    _scoreFieldByStarType[StarType.YELLOW] = YellowScore;
+
     //
     // NOTE:
     //
@@ -355,7 +429,7 @@ public class Main : MonoBehaviour
   {
     bool shouldBeGood = playerLost ? true : (Random.Range(0, 2) == 0);
 
-    float speed = shouldBeGood ? 1.25f : Random.Range(2.0f, 4.0f);
+    float speed = shouldBeGood ? 1.0f : Random.Range(2.0f, 4.0f);
 
     bool allTrajsRandom = playerLost ? true : (Random.Range(0, 2) == 0);
 
@@ -493,7 +567,7 @@ public class Main : MonoBehaviour
       Explosion ec = Instantiate(ExplosionPrefab, randomPos, Quaternion.identity);
       ec.Explode(Color.red);
 
-      yield return new WaitForSeconds(0.2f);
+      yield return new WaitForSecondsRealtime(0.2f);
     }
 
     yield return null;
@@ -519,7 +593,9 @@ public class Main : MonoBehaviour
                                 Constants.SpawnTimeoutMax,
                                 Constants.SpawnTimeoutInit);
 
-    _rewindTo = 1.0f - (_spawnTimeout - Constants.SpawnTimeoutMax) / (Constants.SpawnTimeoutInit - Constants.SpawnTimeoutMax);
+    _rewindTo = 1.0f - GetNormalizedValue(_spawnTimeout,
+                                           Constants.SpawnTimeoutMax,
+                                           Constants.SpawnTimeoutInit);
   }
 
   bool _clockRewinding = false;
@@ -527,9 +603,10 @@ public class Main : MonoBehaviour
   {
     _clockRewinding = true;
 
-    ClockAnimator.Play("clock-reverse");
+    //ClockAnimator.Play("clock-reverse");
 
-    float currentMeter = SpawnMeter.fillAmount;
+    //float currentMeter = SpawnMeter.fillAmount;
+    float currentMeter = SpawnMeterSlider.value;
 
     CalculateTimeGracePeriod();
 
@@ -538,12 +615,13 @@ public class Main : MonoBehaviour
       currentMeter -= Time.smoothDeltaTime * 0.125f;
       currentMeter = Mathf.Clamp(currentMeter, 0.0f, 1.0f);
 
-      SpawnMeter.fillAmount = currentMeter;
+      //SpawnMeter.fillAmount = currentMeter;
+      SpawnMeterSlider.value = currentMeter;
 
       yield return null;
     }
 
-    ClockAnimator.Play("clock");
+    //ClockAnimator.Play("clock");
 
     _clockRewinding = false;
 
@@ -572,6 +650,12 @@ public class Main : MonoBehaviour
         totalScore = Constants.StarScoreByType[starType] + s.GetAdditionalScore();
         _score += totalScore;
         ScoreText.text = _score.ToString();
+
+        #if UNITY_EDITOR
+        _scoreByStarType[starType] += totalScore;
+        _scoreFieldByStarType[starType].text = _scoreByStarType[starType].ToString();
+        #endif
+
         break;
     }
 
@@ -664,10 +748,169 @@ public class Main : MonoBehaviour
   float _timer = 0.0f;
   float _timerBad = 0.0f;
   float _timerTroll = 0.0f;
+  float _timerTheWorld = 0.0f;
+
+  void ToggleAudioFilters()
+  {
+    if (_timeStopped)
+    {
+      ReverbFilter.enabled = true;
+      LowPassFilter.enabled = true;
+    }
+    else
+    {
+      ReverbFilter.enabled = false;
+      LowPassFilter.enabled = false;
+    }
+  }
+
+  bool _timeStopped = false;
+  public bool TimeStopped
+  {
+    get { return _timeStopped; }
+  }
+
+  Coroutine _timeStoppedCoro;
+  IEnumerator TimeHasStoppedRoutine()
+  {
+    float guiCounter = (float)Constants.StoppedTimeDuration;
+
+    StoppedTimeLeftText.text = string.Format("{0:F2}", guiCounter);
+
+    TimeStopLeftHolder.gameObject.SetActive(true);
+
+    float secondPassed = 0.0f;
+
+    float radialFillValue = 1.0f;
+
+    int secondsPassed = 0;
+    while (secondsPassed < Constants.StoppedTimeDuration)
+    {
+      secondPassed += Time.unscaledDeltaTime;
+      if (secondPassed > 1.0f)
+      {
+        secondPassed = 0.0f;
+        secondsPassed++;
+      }
+
+      radialFillValue = 1.0f - (((float)Constants.StoppedTimeDuration - guiCounter) / (float)Constants.StoppedTimeDuration);
+      TimeStopClockIcon.fillAmount = radialFillValue;
+
+      guiCounter -= Time.unscaledDeltaTime;
+
+      guiCounter = Mathf.Clamp(guiCounter, 0.0f, (float)Constants.StoppedTimeDuration);
+
+      StoppedTimeLeftText.text = string.Format("{0}", Constants.StoppedTimeDuration - secondsPassed);
+
+      yield return null;
+    }
+
+    _timeStopped = false;
+
+    TimeStopLeftHolder.gameObject.SetActive(false);
+
+    var coro = TimeResumeRoutine();
+    _timeResumeCoro = StartCoroutine(coro);
+
+    yield return null;
+  }
+
+  Coroutine _stopTimeCoro;
+
+  bool _timeIsStopping = false;
+  IEnumerator StopTimeRoutine()
+  {
+    ToggleAudioFilters();
+
+    _timeIsStopping = true;
+
+    ZaWarudoAnimator.Play("za-warudo");
+    SoundManager.Instance.PlaySound("time-stop", 0.2f, 1.0f, false, true);
+    Time.timeScale = 0.0f;
+
+    yield return new WaitForSecondsRealtime(2.0f);
+
+    _timeIsStopping = false;
+
+    ZaWarudoAnimator.Play("za-warudo-idle");
+
+    var coro = TimeHasStoppedRoutine();
+    _timeStoppedCoro = StartCoroutine(coro);
+
+    yield return null;
+  }
+
+  Coroutine _timeResumeCoro;
+
+  bool _timeResumeWorking = false;
+
+  Color _cloudsColor = Color.white;
+  IEnumerator TimeResumeRoutine()
+  {
+    _timeResumeWorking = true;
+
+    ToggleAudioFilters();
+
+    SoundManager.Instance.PlaySound("time-resume", 0.2f, 1.0f, false, true);
+
+    float cloudsAlpha = Constants.CloudsAlpha;
+    _cloudsColor.a = cloudsAlpha;
+
+    while (Time.timeScale < 1.0f)
+    {
+      cloudsAlpha = Constants.CloudsAlpha - Mathf.Lerp(0.0f, Constants.CloudsAlpha, Time.timeScale);
+      _cloudsColor.a = cloudsAlpha;
+      Clouds.color = _cloudsColor;
+
+      Time.timeScale += Time.unscaledDeltaTime;
+      yield return null;
+    }
+
+    _cloudsColor.a = 0.0f;
+
+    Clouds.color = _cloudsColor;
+
+    Time.timeScale = 1.0f;
+
+    _timeResumeWorking = false;
+
+    yield return null;
+  }
+
+  void ZaWarudo()
+  {
+    var coro = StopTimeRoutine();
+    _stopTimeCoro = StartCoroutine(coro);
+  }
+
+  bool _theWorldReady = false;
+  public void StopTimeClickHandler()
+  {
+    if (!_timeStopped && _theWorldReady)
+    {
+      _timeStopped = true;
+      _theWorldReady = false;
+      _timerTheWorld = 0.0f;
+      TheWorldReadyBorder.gameObject.SetActive(false);
+      TheWorldReadyImage.fillAmount = 0.0f;
+      ZaWarudo();
+    }
+  }
+
+  void RechargeTheWorld()
+  {
+    _theWorldReady = true;
+    TheWorldReadyBorder.gameObject.SetActive(true);
+  }
+
+  float GetNormalizedValue(float value, float min, float max)
+  {
+    return (value - min) / (max - min);
+  }
 
   void Update()
   {
-    if (!_gameStarted || _isGameOver)
+    if (!_gameStarted || _isGameOver || _timeIsStopping)
     {
       return;
     }
@@ -675,7 +918,18 @@ public class Main : MonoBehaviour
     #if UNITY_EDITOR
     if (Input.GetKeyDown(KeyCode.Space))
     {
-      SpawnTrollStars();
+      //SpawnTrollStars();
+      TrollPrefab.TrollPlayer(0.0f);
+    }
+
+    if (!_timeStopped && Input.GetKeyDown(KeyCode.T))
+    {
+      ZaWarudo();
+    }
+
+    if (Input.GetKeyDown(KeyCode.S))
+    {
+      SpawnStar(false);
     }
     #endif
 
@@ -687,18 +941,25 @@ public class Main : MonoBehaviour
                                 Constants.SpawnTimeoutMax,
                                 Constants.SpawnTimeoutInit);
 
-      _spawnRateNormalized = (_spawnTimeout - Constants.SpawnTimeoutMax) / (Constants.SpawnTimeoutInit - Constants.SpawnTimeoutMax);
+      _spawnRateNormalized = GetNormalizedValue(_spawnTimeout,
+                                                 Constants.SpawnTimeoutMax,
+                                                 Constants.SpawnTimeoutInit);
+
       SpawnMeter.fillAmount = 1.0f - _spawnRateNormalized;
+      SpawnMeterSlider.value = 1.0f - _spawnRateNormalized;
     }
 
     float t = (1.0f - _spawnRateNormalized);
-    _trollTimeout = Mathf.Lerp(Constants.TrollTimeoutInit, Constants.TrollTimeoutMax, t);
+    _trollTimeout = Mathf.Lerp(Constants.TrollTimeoutInit,
+                               Constants.TrollTimeoutMax,
+                               t);
 
     CheckMouse();
 
     _timer += Time.smoothDeltaTime;
     _timerBad += Time.smoothDeltaTime;
     _timerTroll += Time.smoothDeltaTime;
+    _timerTheWorld += Time.smoothDeltaTime;
 
     if (_timer > _spawnTimeout)
     {
@@ -715,8 +976,21 @@ public class Main : MonoBehaviour
 
     if (_timerBad > _spawnTimeout)
     {
-      SpawnStar(true);
+      if (Random.Range(0, 2) == 0)
+      {
+        SpawnStar(true);
+      }
+
       _timerBad = 0.0f;
+    }
+
+    float fill = GetNormalizedValue(_timerTheWorld, 0.0f, Constants.TheWorldRecharge);
+    fill = Mathf.Clamp(fill, 0.0f, 1.0f);
+    TheWorldReadyImage.fillAmount = fill;
+
+    if (_timerTheWorld > Constants.TheWorldRecharge)
+    {
+      RechargeTheWorld();
     }
   }
 }

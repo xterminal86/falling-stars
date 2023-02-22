@@ -15,13 +15,13 @@ public class Heart : MonoBehaviour
     while (c.a > 0.0f)
     {
       Vector2 pos = RectTransform_.anchoredPosition;
-      pos.y -= (Time.smoothDeltaTime * 75.0f);
+      pos.y -= (Time.unscaledDeltaTime * 75.0f);
 
       RectTransform_.anchoredPosition = pos;
 
       c = Image_.color;
 
-      c.a -= (Time.smoothDeltaTime * 2.0f);
+      c.a -= (Time.unscaledDeltaTime * 2.0f);
 
       Image_.color = c;
 
