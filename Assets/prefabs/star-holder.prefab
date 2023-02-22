@@ -9781,3 +9781,4 @@ MonoBehaviour:
   SpriteYellow: {fileID: 21300000, guid: 90337d468592ef84d8c5bfd2d2adb70d, type: 3}
   SpriteSilver: {fileID: 21300000, guid: fd8d2fefed2985d48a060232d8d0b1bc, type: 3}
   SpriteCyan: {fileID: 21300000, guid: c588250020903eb45b3662c4fbd5980d, type: 3}
+  SpriteHeart: {fileID: 21300000, guid: f94c211347f0bd847bf67c47a4499c7b, type: 3}

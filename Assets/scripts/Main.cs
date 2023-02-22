@@ -12,9 +12,6 @@ using static Constants;
 
 public class Main : MonoBehaviour
 {
-  int _difficulty = 1;
-  int _score = 0;
-
   [Header("Main Objects")]
   public Star StarPrefab;
   public Explosion ExplosionPrefab;
@@ -88,8 +85,13 @@ public class Main : MonoBehaviour
   [Header("Time stop clouds")]
   public SpriteRenderer Clouds;
 
+  int _difficulty = 1;
+  int _score = 0;
+
   float _spawnTimeout = 0.0f;
   float _trollTimeout = 0.0f;
+
+  float _spawnRateNormalized = 0.0f;
 
 #if UNITY_EDITOR
   [Header("Editor only")]
@@ -106,6 +108,37 @@ public class Main : MonoBehaviour
 
   Dictionary<StarType, TMP_Text> _scoreFieldByStarType = new Dictionary<StarType, TMP_Text>();
 
+#region PROPERTIES
+  bool _isGameOver = false;
+  public bool IsGameOver
+  {
+    get { return _isGameOver; }
+  }
+
+  PairF _borders;
+  public PairF Borders
+  {
+    get { return _borders; }
+  }
+
+  PairF _spawnX;
+  PairF _spawnTrajX;
+
+  float _spawnY;
+  public float SpawnY
+  {
+    get { return _spawnY; }
+  }
+
+  bool _timeStopped = false;
+  public bool TimeStopped
+  {
+    get { return _timeStopped; }
+  }
+#endregion
+
+  // ===========================================================================
+
   public void OnPlusButton()
   {
     _difficulty++;
@@ -115,6 +148,8 @@ public class Main : MonoBehaviour
     DifficultyText.text = _difficulty.ToString();
   }
 
+  // ===========================================================================
+
   public void OnMinusButton()
   {
     _difficulty--;
@@ -123,6 +158,8 @@ public class Main : MonoBehaviour
 
     DifficultyText.text = _difficulty.ToString();
   }
+
+  // ===========================================================================
 
   public void OnStartButton()
   {
@@ -138,12 +175,16 @@ public class Main : MonoBehaviour
     StartGame();
   }
 
+  // ===========================================================================
+
   public void OnRestartButton()
   {
     RestartWindow.gameObject.SetActive(false);
 
     SceneManager.LoadScene("main");
   }
+
+  // ===========================================================================
 
   Vector3 _restartWindowPos = Vector3.zero;
   IEnumerator GameOverScreenSlideRoutine()
@@ -187,6 +228,8 @@ public class Main : MonoBehaviour
     yield return null;
   }
 
+  // ===========================================================================
+
   IEnumerator ShowOverlayRoutine(StarType st)
   {
     Color overlayColor = Color.red; //StarColorsByType[st];
@@ -205,6 +248,8 @@ public class Main : MonoBehaviour
     yield return null;
   }
 
+  // ===========================================================================
+
   Color _none = new Color(0.0f, 0.0f, 0.0f, 0.0f);
   Coroutine _coro;
   public void ShatterOverlay(StarType st)
@@ -222,11 +267,13 @@ public class Main : MonoBehaviour
     }
   }
 
-  int _lives = 5;
+  // ===========================================================================
+
+  int _lives = Constants.MaxLives;
   public void DecrementLives()
   {
     int guiIndex = Hearts.Count - _lives;
-    Hearts[guiIndex].FadeAway();
+    Hearts[guiIndex].FadeOut();
 
 #if UNITY_EDITOR
     if (!GodMode)
@@ -261,13 +308,22 @@ public class Main : MonoBehaviour
     }
   }
 
-  bool _isGameOver = false;
-  public bool IsGameOver
+  // ===========================================================================
+
+  public void IncrementLives()
   {
-    get { return _isGameOver; }
+    if (_lives == Constants.MaxLives)
+    {
+      return;
+    }
+
+    _lives++;
+
+    int guiIndex = Hearts.Count - _lives;
+    Hearts[guiIndex].FadeIn();
   }
 
-  float _spawnRateNormalized = 0.0f;
+  // ===========================================================================
 
   bool _gameStarted = false;
   void StartGame()
@@ -293,20 +349,7 @@ public class Main : MonoBehaviour
     _gameStarted = true;
   }
 
-  PairF _borders;
-  public PairF Borders
-  {
-    get { return _borders; }
-  }
-
-  PairF _spawnX;
-  PairF _spawnTrajX;
-
-  float _spawnY;
-  public float SpawnY
-  {
-    get { return _spawnY; }
-  }
+  // ===========================================================================
 
   Vector2 _groundSpan = Vector2.zero;
   void CreateGround()
@@ -323,6 +366,8 @@ public class Main : MonoBehaviour
     }
   }
 
+  // ===========================================================================
+
   StarType GetRandomGoodStar()
   {
     int maxType = (int)StarType.SILVER;
@@ -330,11 +375,15 @@ public class Main : MonoBehaviour
     return (StarType)starType;
   }
 
+  // ===========================================================================
+
   StarTrajectory GetRandomTrajectory()
   {
     int r = Random.Range(0, (int)StarTrajectory.CIRCLE + 1);
     return (StarTrajectory)r;
   }
+
+  // ===========================================================================
 
   void Awake()
   {
@@ -407,6 +456,8 @@ public class Main : MonoBehaviour
     //
   }
 
+  // ===========================================================================
+
   Vector2 _rndDir = Vector2.zero;
   public Vector2 GetRandomDir()
   {
@@ -422,8 +473,9 @@ public class Main : MonoBehaviour
     return _rndDir;
   }
 
-  Vector3 _starDir = Vector3.zero;
+  // ===========================================================================
 
+  Vector3 _starDir = Vector3.zero;
   Vector3 _trollStarSpawnPos = Vector3.zero;
   public void SpawnTrollStars(bool playerLost = false)
   {
@@ -478,6 +530,8 @@ public class Main : MonoBehaviour
     }
   }
 
+  // ===========================================================================
+
   Vector3 _goodStarLastSpawnPos = Vector3.zero;
   void SpawnStar(bool badStar)
   {
@@ -508,9 +562,9 @@ public class Main : MonoBehaviour
     _goodStarLastSpawnPos.y = _spawnY;
 
     Star star = Instantiate(StarPrefab,
-                             _goodStarLastSpawnPos,
-                             Quaternion.identity,
-                             ObjectsHolder);
+                            _goodStarLastSpawnPos,
+                            Quaternion.identity,
+                            ObjectsHolder);
 
     StarTrajectory traj = (StarTrajectory)trajType;
 
@@ -528,12 +582,10 @@ public class Main : MonoBehaviour
       speedScale = Constants.StarSpeedScaleByType[st];
     }
 
-    star.Init(st,
-              angle,
-              dir,
-              Constants.StartSpeed * speedScale,
-              traj);
+    star.Init(st, angle, dir, Constants.StartSpeed * speedScale, traj);
   }
+
+  // ===========================================================================
 
   IEnumerator CaughtBadStarExplosionRoutine(Vector3 pointOfCreation)
   {
@@ -573,6 +625,8 @@ public class Main : MonoBehaviour
     yield return null;
   }
 
+  // ===========================================================================
+
   void InstantiateAtMousePos(GameObject prefab)
   {
     Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -580,6 +634,8 @@ public class Main : MonoBehaviour
     var go = Instantiate(prefab, wp, Quaternion.identity, ObjectsHolder);
     Destroy(go, 3.0f);
   }
+
+  // ===========================================================================
 
   float _rewindTo = 0.0f;
   void CalculateTimeGracePeriod()
@@ -597,6 +653,8 @@ public class Main : MonoBehaviour
                                            Constants.SpawnTimeoutMax,
                                            Constants.SpawnTimeoutInit);
   }
+
+  // ===========================================================================
 
   bool _clockRewinding = false;
   IEnumerator RewindClockRoutine()
@@ -628,10 +686,14 @@ public class Main : MonoBehaviour
     yield return null;
   }
 
+  // ===========================================================================
+
   void PunchTroll(Troll t)
   {
     t.PunchTroll();
   }
+
+  // ===========================================================================
 
   void ProcessStar(Star s, Vector3 hitPos)
   {
@@ -644,6 +706,10 @@ public class Main : MonoBehaviour
     {
       case StarType.BAD:
         DecrementLives();
+        break;
+
+      case StarType.HEART:
+        IncrementLives();
         break;
 
       default:
@@ -664,48 +730,56 @@ public class Main : MonoBehaviour
     Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
     wp.z = 0.0f;
 
-    if (starType != StarType.BAD)
+    switch(starType)
     {
-      var go = Instantiate(MouseClickEffectPrefab, objPos, Quaternion.identity, ObjectsHolder);
-      Destroy(go, 1.0f);
-
-      float rndPitch = Random.Range(0.6f, 1.4f);
-      SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch, false);
-      ScoreAnimator.Play("score-pop", -1, 0.0f);
-
-      _scoreBubblePos.x = objPos.x;
-      _scoreBubblePos.y = objPos.y + 0.5f;
-
-      ScoreBubble sb = Instantiate(ScoreBubblePrefab,
-                                  _scoreBubblePos,
-                                  Quaternion.identity,
-                                  ObjectsHolder);
-
-      sb.Init(starType, totalScore);
-    }
-    else
-    {
-      if (_lives != 0)
+      case StarType.BAD:
       {
-        if (!_clockRewinding)
+        if (_lives != 0)
         {
-          IEnumerator rewindTime = RewindClockRoutine();
-          StartCoroutine(rewindTime);
+          if (!_clockRewinding)
+          {
+            IEnumerator rewindTime = RewindClockRoutine();
+            StartCoroutine(rewindTime);
+          }
+          else
+          {
+            CalculateTimeGracePeriod();
+          }
         }
-        else
-        {
-          CalculateTimeGracePeriod();
-        }
-      }
 
-      int index = Random.Range(1, 5);
-      string soundName = string.Format("explode{0}", index);
-      SoundManager.Instance.PlaySound(soundName);
-      IEnumerator coro = CaughtBadStarExplosionRoutine(objPos);
-      StartCoroutine(coro);
-      ScreenShaker.ShakeScreen();
+        int index = Random.Range(1, 5);
+        string soundName = string.Format("explode{0}", index);
+        SoundManager.Instance.PlaySound(soundName);
+        IEnumerator coro = CaughtBadStarExplosionRoutine(objPos);
+        StartCoroutine(coro);
+        ScreenShaker.ShakeScreen();
+      }
+      break;
+
+      default:
+      {
+        var go = Instantiate(MouseClickEffectPrefab, objPos, Quaternion.identity, ObjectsHolder);
+        Destroy(go, 1.0f);
+
+        float rndPitch = Random.Range(0.6f, 1.4f);
+        SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch, false);
+        ScoreAnimator.Play("score-pop", -1, 0.0f);
+
+        _scoreBubblePos.x = objPos.x;
+        _scoreBubblePos.y = objPos.y + 0.5f;
+
+        ScoreBubble sb = Instantiate(ScoreBubblePrefab,
+                                    _scoreBubblePos,
+                                    Quaternion.identity,
+                                    ObjectsHolder);
+
+        sb.Init(starType, totalScore);
+      }
+      break;
     }
   }
+
+  // ===========================================================================
 
   Vector3 _scoreBubblePos = Vector3.zero;
   void CheckMouse()
@@ -745,10 +819,7 @@ public class Main : MonoBehaviour
     }
   }
 
-  float _timer = 0.0f;
-  float _timerBad = 0.0f;
-  float _timerTroll = 0.0f;
-  float _timerTheWorld = 0.0f;
+  // ===========================================================================
 
   void ToggleAudioFilters()
   {
@@ -764,11 +835,7 @@ public class Main : MonoBehaviour
     }
   }
 
-  bool _timeStopped = false;
-  public bool TimeStopped
-  {
-    get { return _timeStopped; }
-  }
+  // ===========================================================================
 
   Coroutine _timeStoppedCoro;
   IEnumerator TimeHasStoppedRoutine()
@@ -815,8 +882,9 @@ public class Main : MonoBehaviour
     yield return null;
   }
 
-  Coroutine _stopTimeCoro;
+  // ===========================================================================
 
+  Coroutine _stopTimeCoro;
   bool _timeIsStopping = false;
   IEnumerator StopTimeRoutine()
   {
@@ -840,10 +908,10 @@ public class Main : MonoBehaviour
     yield return null;
   }
 
+  // ===========================================================================
+
   Coroutine _timeResumeCoro;
-
   bool _timeResumeWorking = false;
-
   Color _cloudsColor = Color.white;
   IEnumerator TimeResumeRoutine()
   {
@@ -877,15 +945,24 @@ public class Main : MonoBehaviour
     yield return null;
   }
 
+  // ===========================================================================
+
   void ZaWarudo()
   {
     var coro = StopTimeRoutine();
     _stopTimeCoro = StartCoroutine(coro);
   }
 
+  // ===========================================================================
+
   bool _theWorldReady = false;
   public void StopTimeClickHandler()
   {
+    if (!_gameStarted || _isGameOver || _timeIsStopping)
+    {
+      return;
+    }
+
     if (!_timeStopped && _theWorldReady)
     {
       _timeStopped = true;
@@ -897,16 +974,27 @@ public class Main : MonoBehaviour
     }
   }
 
+  // ===========================================================================
+
   void RechargeTheWorld()
   {
     _theWorldReady = true;
     TheWorldReadyBorder.gameObject.SetActive(true);
   }
 
+  // ===========================================================================
+
   float GetNormalizedValue(float value, float min, float max)
   {
     return (value - min) / (max - min);
   }
+
+  // ===========================================================================
+
+  float _timer = 0.0f;
+  float _timerBad = 0.0f;
+  float _timerTroll = 0.0f;
+  float _timerTheWorld = 0.0f;
 
   void Update()
   {
@@ -931,6 +1019,11 @@ public class Main : MonoBehaviour
     if (Input.GetKeyDown(KeyCode.S))
     {
       SpawnStar(false);
+    }
+
+    if (Input.GetKeyDown(KeyCode.H))
+    {
+      IncrementLives();
     }
     #endif
 

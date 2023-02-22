@@ -18,6 +18,7 @@ public class Star : MonoBehaviour
   public Sprite SpriteYellow;
   public Sprite SpriteSilver;
   public Sprite SpriteCyan;
+  public Sprite SpriteHeart;
 
   Vector2 _direction = Vector2.zero;
   float _speed = 0.0f;
@@ -152,7 +153,14 @@ public class Star : MonoBehaviour
 
     _angleSpeed = Mathf.Sign(angle) * _speed * _starSpinSpeed;
 
-    _color = Constants.StarColorsByType[type];
+    if (_starType == StarType.HEART)
+    {
+      _color = Color.white;
+    }
+    else
+    {
+      _color = Constants.StarColorsByType[type];
+    }
 
     switch (type)
     {
@@ -174,6 +182,10 @@ public class Star : MonoBehaviour
 
       case StarType.YELLOW:
         _spriteRenderer.sprite = SpriteYellow;
+        break;
+
+      case StarType.HEART:
+        _spriteRenderer.sprite = SpriteHeart;
         break;
     }
 

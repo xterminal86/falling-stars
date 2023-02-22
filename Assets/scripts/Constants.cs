@@ -17,6 +17,8 @@ public static class Constants
   public static readonly float StarFallSpreadAngle = 60.0f;
 
   public static readonly int StoppedTimeDuration = 8;
+  public static readonly int MaxLives = 5;
+
   public static readonly float TheWorldRecharge = 30.0f;
 
   public enum StarType
@@ -25,7 +27,8 @@ public static class Constants
     CYAN,
     GREEN,
     SILVER,
-    BAD
+    BAD,
+    HEART
   };
 
   public enum StarTrajectory
@@ -41,7 +44,8 @@ public static class Constants
     { StarType.CYAN,   new Color(0.0f, 1.0f, 1.0f, 1.0f) },
     { StarType.GREEN,  new Color(0.0f, 1.0f, 0.0f, 1.0f) },
     { StarType.SILVER, new Color(1.0f, 1.0f, 1.0f, 1.0f) },
-    { StarType.BAD,    new Color(1.0f, 0.0f, 0.0f, 1.0f) }
+    { StarType.BAD,    new Color(1.0f, 0.0f, 0.0f, 1.0f) },
+    { StarType.HEART,  new Color(1.0f, 0.0f, 0.0f, 1.0f) }
   };
 
   public static readonly Dictionary<StarType, int> StarScoreByType = new Dictionary<StarType, int>()
