@@ -3508,6 +3508,7 @@ MonoBehaviour:
   StarPrefab: {fileID: 259383100598667727, guid: cd0b1c65070d522c8892f628e70bc190, type: 3}
   ExplosionPrefab: {fileID: 3915667846541276990, guid: 4bc1f91cf397f1b49b1307a90ce300d5, type: 3}
   ScoreBubblePrefab: {fileID: 2210228878528355660, guid: ecd6c15a1cca0a3ef978d1fe61794607, type: 3}
+  ImageBubblePrefab: {fileID: 672043369643227517, guid: f7153f66d5aa9604f962b7c7ad1bdd94, type: 3}
   TrollPrefab: {fileID: 7924391381908629843}
   GroundCellPrefab: {fileID: 3900917359699951880, guid: 1646aa20fb6042b278cb80dbbc7dfb7e, type: 3}
   MouseClickEffectPrefab: {fileID: 7631994198821026851, guid: b12aea1f2180ad045a04fb793a5c49bc, type: 3}
@@ -10075,12 +10076,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_renderer: {fileID: 1134087487}
-  m_maskType: 0
   _SortingLayer: 0
   _SortingLayerID: 0
   _SortingOrder: 0
+  m_hasFontAssetChanged: 0
+  m_renderer: {fileID: 1134087487}
+  m_maskType: 0
 --- !u!23 &1134087487
 MeshRenderer:
   m_ObjectHideFlags: 0

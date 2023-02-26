@@ -6,20 +6,20 @@ using UnityEngine;
 public static class Constants
 {
   public static readonly float BottomBorder = -4.0f;
-
   public static readonly float TrollTimeoutInit = 30.0f;
   public static readonly float TrollTimeoutMax = 5.0f;
   public static readonly float SpawnTimeoutInit = 2.0f;
   public static readonly float SpawnTimeoutMax = 0.25f;
   public static readonly float SpawnTimeoutDecrementScale = 0.0125f;
   public static readonly float StartSpeed = 2.0f;
-  public static readonly float CloudsAlpha = 0.1f;
+  public static readonly float CloudsAlpha = 0.05f;
   public static readonly float StarFallSpreadAngle = 60.0f;
+  public static readonly float TheWorldRecharge = 20.0f;
 
-  public static readonly int StoppedTimeDuration = 8;
+  public static readonly int HeartStarMaxChance = 75;
+  public static readonly int HeartSpawnCheckAfterIterations = 15;
+  public static readonly int StoppedTimeDuration = 5;
   public static readonly int MaxLives = 5;
-
-  public static readonly float TheWorldRecharge = 30.0f;
 
   public enum StarType
   {
@@ -61,7 +61,8 @@ public static class Constants
     { StarType.YELLOW, 2.0f  },
     { StarType.CYAN,   1.75f },
     { StarType.GREEN,  1.25f },
-    { StarType.SILVER, 1.0f  }
+    { StarType.SILVER, 1.0f  },
+    { StarType.HEART,  1.5f  }
   };
 
   public static readonly Dictionary<StarType, float> StarAdditionalScoreMultiplierByType = new Dictionary<StarType, float>()

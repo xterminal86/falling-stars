@@ -179,8 +179,8 @@ public class Troll : MonoBehaviour
     {
       if (_trolling)
       {
-        StopCoroutine(_trollRoutine);
         _trolling = false;
+        StopCoroutine(_trollRoutine);
       }
 
       SoundManager.Instance.PlaySound("punch", 1.0f, 1.0f, false);

@@ -9772,6 +9772,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f44eb2cac56dba24c9716a16967d307a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ColliderComponent: {fileID: 7598277179145002475}
   InnerObject: {fileID: 7923839013099749732}
   Shine: {fileID: 7802568290596619288}
   Trail: {fileID: 7802568290604368471}

@@ -6,6 +6,8 @@ using static Constants;
 
 public class Star : MonoBehaviour
 {
+  public CircleCollider2D ColliderComponent;
+
   public Transform InnerObject;
 
   public ParticleSystem Shine;
@@ -30,6 +32,12 @@ public class Star : MonoBehaviour
 
   Main _mainRef;
 
+  bool _exploded = false;
+  public bool Exploded
+  {
+    get { return _exploded; }
+  }
+
   SpriteRenderer _spriteRenderer;
   CircleCollider2D _collider;
   void Awake()
@@ -47,6 +55,8 @@ public class Star : MonoBehaviour
     _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
     _collider = GetComponentInChildren<CircleCollider2D>();
   }
+
+  // ===========================================================================
 
   void AdjustParticleSystemColor(ParticleSystem ps)
   {
@@ -70,11 +80,15 @@ public class Star : MonoBehaviour
     col.color = g;
   }
 
+  // ===========================================================================
+
   StarType _starType = StarType.SILVER;
   public StarType GetStarType()
   {
     return _starType;
   }
+
+  // ===========================================================================
 
   void RandomizeTrajectory()
   {
@@ -96,6 +110,8 @@ public class Star : MonoBehaviour
         break;
     }
   }
+
+  // ===========================================================================
 
   int _additionalScore = 0;
   public int GetAdditionalScore()
@@ -129,6 +145,8 @@ public class Star : MonoBehaviour
     return _additionalScore;
   }
 
+  // ===========================================================================
+
   StarTrajectory _starTrajectory;
   public void Init(StarType type,
                     float angle,
@@ -155,7 +173,10 @@ public class Star : MonoBehaviour
 
     if (_starType == StarType.HEART)
     {
-      _color = Color.white;
+      _color = Constants.StarColorsByType[type];
+      _spriteRenderer.color = Color.white;
+      InnerObject.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+      ColliderComponent.radius = 0.5f;
     }
     else
     {
@@ -218,11 +239,7 @@ public class Star : MonoBehaviour
     }
   }
 
-  bool _exploded = false;
-  public bool Exploded
-  {
-    get { return _exploded; }
-  }
+  // ===========================================================================
 
   PairF _borders;
   void CheckBorders()
@@ -252,13 +269,15 @@ public class Star : MonoBehaviour
 
         _exploded = true;
 
-        if (_starType != StarType.BAD && !_mainRef.IsGameOver)
+        if (_starType != StarType.BAD
+         && _starType != StarType.HEART
+         && !_mainRef.IsGameOver)
         {
           _mainRef.DecrementLives();
           _mainRef.ShatterOverlay(_starType);
         }
 
-        if (_starType == StarType.BAD)
+        if (_starType == StarType.BAD || _starType == StarType.HEART)
         {
           SoundManager.Instance.PlaySound("star-douse-eq", 0.5f);
         }
@@ -268,6 +287,11 @@ public class Star : MonoBehaviour
           //float volume = 0.4f * (pitch * 0.25f);
           SoundManager.Instance.PlaySound("star-break", 0.3f, 1.0f);
         }
+
+        if (_starType == StarType.HEART)
+        {
+          _mainRef.HeartWasSpawned = false;
+        }
       }
 
       Shine.Stop();
@@ -275,6 +299,8 @@ public class Star : MonoBehaviour
       Destroy(gameObject, 3.0f);
     }
   }
+
+  // ===========================================================================
 
   bool _starCaught = false;
   public void ProcessHit()
@@ -287,7 +313,14 @@ public class Star : MonoBehaviour
     Shine.Stop();
     Trail.Stop();
     Destroy(gameObject, 1.0f);
+
+    if (_starType == StarType.HEART)
+    {
+      _mainRef.HeartWasSpawned = false;
+    }
   }
+
+  // ===========================================================================
 
   Vector3 _innerObjectPos = Vector3.zero;
 
@@ -327,6 +360,8 @@ public class Star : MonoBehaviour
     InnerObject.localPosition = _innerObjectPos;
   }
 
+  // ===========================================================================
+
   float _waveWidth = 1.0f;
   //int _wobbleSpeed = 10;
   void AddWave()
@@ -350,6 +385,8 @@ public class Star : MonoBehaviour
 
     InnerObject.localPosition = _innerObjectPos;
   }
+
+  // ===========================================================================
 
   Vector3 _holderPos = Vector3.zero;
   Vector3 _angles = Vector3.zero;
@@ -382,6 +419,8 @@ public class Star : MonoBehaviour
 
     transform.position = _holderPos;
   }
+
+  // ===========================================================================
 
   void Update()
   {

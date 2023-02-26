@@ -8,7 +8,7 @@ public class Heart : MonoBehaviour
   public RectTransform RectTransform_;
   public Image Image_;
 
-  IEnumerator FadeRoutine()
+  IEnumerator FadeOutRoutine()
   {
     Color c = Image_.color;
 
@@ -91,7 +91,7 @@ public class Heart : MonoBehaviour
       }
 
       _fadingOut = true;
-      IEnumerator coro = FadeRoutine();
+      IEnumerator coro = FadeOutRoutine();
       _fadeOutCoro = StartCoroutine(coro);
     }
   }
