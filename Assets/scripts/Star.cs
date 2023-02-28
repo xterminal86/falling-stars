@@ -42,6 +42,8 @@ public class Star : MonoBehaviour, IPoolObject
 
   public void Prepare()
   {
+    Shine.Play();
+    Trail.Play();
   }
 
   // ===========================================================================
@@ -50,6 +52,7 @@ public class Star : MonoBehaviour, IPoolObject
   public void ResetState()
   {
     _resetPosition.y = _mainRef.SpawnY;
+    _innerObjectPos = _resetPosition;
     transform.position = _resetPosition;
     InnerObject.localPosition = Vector3.zero;
     InnerObject.localScale = Vector3.one;
@@ -60,8 +63,6 @@ public class Star : MonoBehaviour, IPoolObject
     _speed = 0.0f;
     _angleSpeed = 0.0f;
     ColliderComponent.radius = 0.75f;
-    Shine.Play();
-    Trail.Play();
   }
 
   // ===========================================================================
@@ -351,7 +352,7 @@ public class Star : MonoBehaviour, IPoolObject
       _mainRef.HeartWasSpawned = false;
     }
 
-    _mainRef.StarsPool.Return(gameObject, 1.0f);
+    _mainRef.StarsPool.Return(gameObject, 3.0f);
   }
 
   // ===========================================================================

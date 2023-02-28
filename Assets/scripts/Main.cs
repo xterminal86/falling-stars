@@ -409,7 +409,7 @@ public class Main : MonoBehaviour
     Input.backButtonLeavesApp = true;
     Application.targetFrameRate = 90;
 
-    _spawnY = Camera.main.orthographicSize + 1.0f;
+    _spawnY = Camera.main.orthographicSize + 2.0f;
 
     float aspect = (float)Screen.width / (float)Screen.height;
     float hBorder = Camera.main.orthographicSize * aspect;
