@@ -12,11 +12,15 @@ using static Constants;
 
 public class Main : MonoBehaviour
 {
+  [Header("Object Pools")]
+  public ObjectsPool StarsPool;
+  public ObjectsPool ExplosionsPool;
+  public ObjectsPool TouchesPool;
+  public ObjectsPool MouseClickEffectPool;
+  public ObjectsPool BubblesPool;
+
   [Header("Main Objects")]
   public Star StarPrefab;
-  public Explosion ExplosionPrefab;
-  public ScoreBubble ScoreBubblePrefab;
-  public ImageBubble ImageBubblePrefab;
   public Troll TrollPrefab;
 
   [Header("Scene Props")]
@@ -47,6 +51,12 @@ public class Main : MonoBehaviour
   public TMP_Text GreenScore;
   public TMP_Text YellowScore;
 
+  public TMP_Text ActiveStars;
+  public TMP_Text ActiveExplosions;
+  public TMP_Text ActiveTouches;
+  public TMP_Text ActiveBubbles;
+  public TMP_Text ActiveClicks;
+
   [Header("Clock bar")]
   public Image SpawnMeter;
 
@@ -70,9 +80,6 @@ public class Main : MonoBehaviour
   public GameObject BtnHighScores;
   public Slider SpawnMeterSlider;
 
-  [Header("Touch effect")]
-  public GameObject TouchEffectPrefab;
-
   [Header("Screen shaker")]
   public ScreenShake ScreenShaker;
 
@@ -85,6 +92,9 @@ public class Main : MonoBehaviour
 
   [Header("Time stop clouds")]
   public SpriteRenderer Clouds;
+
+  [Header("Various")]
+  public Sprite ImageBubbleSprite;
 
   int _difficulty = 1;
   int _score = 0;
@@ -449,9 +459,9 @@ public class Main : MonoBehaviour
 
     AppConfig.ReadConfig();
 
-    _scoreFieldByStarType[StarType.CYAN] = CyanScore;
+    _scoreFieldByStarType[StarType.CYAN]   = CyanScore;
     _scoreFieldByStarType[StarType.SILVER] = SilverScore;
-    _scoreFieldByStarType[StarType.GREEN] = GreenScore;
+    _scoreFieldByStarType[StarType.GREEN]  = GreenScore;
     _scoreFieldByStarType[StarType.YELLOW] = YellowScore;
 
     //
@@ -524,10 +534,13 @@ public class Main : MonoBehaviour
     {
       _trollStarSpawnPos.x = x;
 
-      Star star = Instantiate(StarPrefab,
-                              _trollStarSpawnPos,
-                              Quaternion.identity,
-                              ObjectsHolder);
+      GameObject go = StarsPool.Acquire(_trollStarSpawnPos);
+      if (go == null)
+      {
+        continue;
+      }
+
+      Star star = go.GetComponent<Star>();
 
       StarType st = shouldBeGood ? GetRandomGoodStar() : StarType.BAD;
 
@@ -537,6 +550,47 @@ public class Main : MonoBehaviour
                 speed,
                 allTrajsRandom ? GetRandomTrajectory() : traj);
     }
+  }
+
+  // ===========================================================================
+
+  void SpawnHeart()
+  {
+    float angle = Random.Range(-Constants.StarFallSpreadAngle,
+                                Constants.StarFallSpreadAngle);
+
+    StarType st = StarType.HEART;
+
+    int trajType = Random.Range(0, 3);
+
+    PairF spawnX = (trajType == 0) ? _spawnX : _spawnTrajX;
+
+    float x = Random.Range(spawnX.Key, spawnX.Value);
+
+    float s = Mathf.Sin(angle * Mathf.Deg2Rad);
+    float c = Mathf.Cos(angle * Mathf.Deg2Rad);
+
+    //Debug.Log($"angle = { angle }");
+    //Debug.Log($"sin = {s} cos = {c}");
+
+    Vector2 dir = new Vector2(s, -c);
+
+    _goodStarLastSpawnPos.x = x;
+    _goodStarLastSpawnPos.y = _spawnY;
+
+    GameObject go = StarsPool.Acquire(_goodStarLastSpawnPos);
+    if (go == null)
+    {
+      return;
+    }
+
+    Star star = go.GetComponent<Star>();
+
+    StarTrajectory traj = (StarTrajectory)trajType;
+
+    float speedScale = Constants.StarSpeedScaleByType[st];
+
+    star.Init(st, angle, dir, Constants.StartSpeed * speedScale, traj);
   }
 
   // ===========================================================================
@@ -587,10 +641,13 @@ public class Main : MonoBehaviour
     _goodStarLastSpawnPos.x = x;
     _goodStarLastSpawnPos.y = _spawnY;
 
-    Star star = Instantiate(StarPrefab,
-                            _goodStarLastSpawnPos,
-                            Quaternion.identity,
-                            ObjectsHolder);
+    GameObject go = StarsPool.Acquire(_goodStarLastSpawnPos);
+    if (go == null)
+    {
+      return;
+    }
+
+    Star star = go.GetComponent<Star>();
 
     StarTrajectory traj = (StarTrajectory)trajType;
 
@@ -642,23 +699,17 @@ public class Main : MonoBehaviour
         randomPos.y += dy;
       }
 
-      Explosion ec = Instantiate(ExplosionPrefab, randomPos, Quaternion.identity);
-      ec.Explode(Color.red);
+      GameObject obj = ExplosionsPool.Acquire(randomPos);
+      if (obj != null)
+      {
+        Explosion ec = obj.GetComponent<Explosion>();
+        ec.Explode(Color.red);
+      }
 
       yield return new WaitForSecondsRealtime(0.2f);
     }
 
     yield return null;
-  }
-
-  // ===========================================================================
-
-  void InstantiateAtMousePos(GameObject prefab)
-  {
-    Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-    wp.z = 0.0f;
-    var go = Instantiate(prefab, wp, Quaternion.identity, ObjectsHolder);
-    Destroy(go, 1.0f);
   }
 
   // ===========================================================================
@@ -717,6 +768,17 @@ public class Main : MonoBehaviour
   void PunchTroll(Troll t)
   {
     t.PunchTroll();
+  }
+
+  // ===========================================================================
+
+  void CreateMouseClickEffect(Vector3 at)
+  {
+    GameObject go = MouseClickEffectPool.Acquire(at);
+    if (go != null)
+    {
+      MouseClickEffectPool.Return(go, 1.0f);
+    }
   }
 
   // ===========================================================================
@@ -782,30 +844,9 @@ public class Main : MonoBehaviour
       }
       break;
 
-      case StarType.HEART:
-      {
-        var go = Instantiate(MouseClickEffectPrefab, objPos, Quaternion.identity, ObjectsHolder);
-        Destroy(go, 1.0f);
-
-        float rndPitch = Random.Range(0.6f, 1.4f);
-        SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch, false);
-        ScoreAnimator.Play("score-pop", -1, 0.0f);
-
-        _bubblePos.x = objPos.x;
-        _bubblePos.y = objPos.y + 0.5f;
-
-        ImageBubble ib = Instantiate(ImageBubblePrefab,
-                                      _bubblePos,
-                                      Quaternion.identity,
-                                      ObjectsHolder);
-        ib.Init();
-      }
-      break;
-
       default:
       {
-        var go = Instantiate(MouseClickEffectPrefab, objPos, Quaternion.identity, ObjectsHolder);
-        Destroy(go, 1.0f);
+        CreateMouseClickEffect(objPos);
 
         float rndPitch = Random.Range(0.6f, 1.4f);
         SoundManager.Instance.PlaySound("pop", 1.0f, rndPitch, false);
@@ -814,12 +855,21 @@ public class Main : MonoBehaviour
         _bubblePos.x = objPos.x;
         _bubblePos.y = objPos.y + 0.5f;
 
-        ScoreBubble sb = Instantiate(ScoreBubblePrefab,
-                                    _bubblePos,
-                                    Quaternion.identity,
-                                    ObjectsHolder);
+        GameObject go = BubblesPool.Acquire(_bubblePos);
+        if (go != null)
+        {
+          Bubble b = go.GetComponent<Bubble>();
 
-        sb.Init(starType, totalScore);
+          if (starType != StarType.HEART)
+          {
+            b.SetText(string.Format("+{0}", totalScore),
+                      Constants.StarColorsByType[starType]);
+          }
+          else
+          {
+            b.SetImage(ImageBubbleSprite, Color.white);
+          }
+        }
       }
       break;
     }
@@ -860,7 +910,13 @@ public class Main : MonoBehaviour
       }
       else
       {
-        InstantiateAtMousePos(TouchEffectPrefab);
+        Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        wp.z = 0.0f;
+        GameObject go = TouchesPool.Acquire(wp);
+        if (go != null)
+        {
+          TouchesPool.Return(go, 1.0f);
+        }
       }
     }
   }
@@ -1046,6 +1102,10 @@ public class Main : MonoBehaviour
 
   void Update()
   {
+#if UNITY_EDITOR
+    //ShowPoolInfo();
+#endif
+
     if (!_gameStarted || _isGameOver || _timeIsStopping)
     {
       return;
@@ -1067,6 +1127,11 @@ public class Main : MonoBehaviour
     if (Input.GetKeyDown(KeyCode.S))
     {
       SpawnStar(false);
+    }
+
+    if (Input.GetKeyDown(KeyCode.H))
+    {
+      SpawnHeart();
     }
 #endif
 
@@ -1132,4 +1197,27 @@ public class Main : MonoBehaviour
       RechargeTheWorld();
     }
   }
+
+  // ===========================================================================
+
+#if UNITY_EDITOR
+  void ShowPoolInfo()
+  {
+    ActiveStars.text = string.Format("Stars = {0} / {1}",
+                                     StarsPool.ActiveObjects,
+                                     StarsPool.PoolSize);
+    ActiveExplosions.text = string.Format("Explosions = {0} / {1}",
+                                          ExplosionsPool.ActiveObjects,
+                                          ExplosionsPool.PoolSize);
+    ActiveTouches.text = string.Format("Touches = {0} / {1}",
+                                       TouchesPool.ActiveObjects,
+                                       TouchesPool.PoolSize);
+    ActiveBubbles.text = string.Format("Bubbles = {0} / {1}",
+                                       BubblesPool.ActiveObjects,
+                                       BubblesPool.PoolSize);
+    ActiveClicks.text  = string.Format("Clicks = {0} / {1}",
+                                       MouseClickEffectPool.ActiveObjects,
+                                       MouseClickEffectPool.PoolSize);
+  }
+#endif
 }

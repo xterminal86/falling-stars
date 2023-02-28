@@ -4,7 +4,7 @@ using PairF = System.Collections.Generic.KeyValuePair<float, float>;
 
 using static Constants;
 
-public class Star : MonoBehaviour
+public class Star : MonoBehaviour, IPoolObject
 {
   public CircleCollider2D ColliderComponent;
 
@@ -37,6 +37,34 @@ public class Star : MonoBehaviour
   {
     get { return _exploded; }
   }
+
+  // ===========================================================================
+
+  public void Prepare()
+  {
+  }
+
+  // ===========================================================================
+
+  Vector3 _resetPosition = Vector3.zero;
+  public void ResetState()
+  {
+    _resetPosition.y = _mainRef.SpawnY;
+    transform.position = _resetPosition;
+    InnerObject.localPosition = Vector3.zero;
+    InnerObject.localScale = Vector3.one;
+    _exploded = false;
+    _starCaught = false;
+    _spriteRenderer.enabled = true;
+    _collider.enabled = true;
+    _speed = 0.0f;
+    _angleSpeed = 0.0f;
+    ColliderComponent.radius = 0.75f;
+    Shine.Play();
+    Trail.Play();
+  }
+
+  // ===========================================================================
 
   SpriteRenderer _spriteRenderer;
   CircleCollider2D _collider;
@@ -264,8 +292,12 @@ public class Star : MonoBehaviour
 
       if (!_exploded)
       {
-        Explosion ec = Instantiate(ExplosionPrefab, InnerObject.position, Quaternion.identity);
-        ec.Explode(_color);
+        GameObject go = _mainRef.ExplosionsPool.Acquire(InnerObject.position);
+        if (go != null)
+        {
+          Explosion ec = go.GetComponent<Explosion>();
+          ec.Explode(_color);
+        }
 
         _exploded = true;
 
@@ -296,7 +328,8 @@ public class Star : MonoBehaviour
 
       Shine.Stop();
       Trail.Stop();
-      Destroy(gameObject, 3.0f);
+
+      _mainRef.StarsPool.Return(gameObject, 3.0f);
     }
   }
 
@@ -312,12 +345,13 @@ public class Star : MonoBehaviour
     _angleSpeed = 0.0f;
     Shine.Stop();
     Trail.Stop();
-    Destroy(gameObject, 1.0f);
 
     if (_starType == StarType.HEART)
     {
       _mainRef.HeartWasSpawned = false;
     }
+
+    _mainRef.StarsPool.Return(gameObject, 1.0f);
   }
 
   // ===========================================================================

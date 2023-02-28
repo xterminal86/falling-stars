@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 9158304986583614609}
   - component: {fileID: 8431555552660897085}
   - component: {fileID: 7880371764511719592}
+  - component: {fileID: -4792892627969136820}
   m_Layer: 0
   m_Name: mouse-click-effect
   m_TagString: Untagged
@@ -105,3 +106,15 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
+--- !u!114 &-4792892627969136820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7631994198821026851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55e378f7bc535d89b830dd0c769f2d2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
