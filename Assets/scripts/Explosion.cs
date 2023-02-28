@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Explosion : MonoBehaviour, IPoolObject
+public class Explosion : MonoBehaviour
 {
   public SpriteRenderer SpriteRenderer_;
 
@@ -28,13 +28,5 @@ public class Explosion : MonoBehaviour, IPoolObject
     SpriteRenderer_.color = c;
 
     _mainRef.ExplosionsPool.Return(gameObject, 3.0f);
-  }
-
-  public void Prepare()
-  {
-  }
-
-  public void ResetState()
-  {
   }
 }

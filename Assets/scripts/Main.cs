@@ -33,11 +33,7 @@ public class Main : MonoBehaviour
 
   [Header("Animators")]
   public Animator ScoreAnimator;
-  public Animator ClockAnimator;
   public Animator ZaWarudoAnimator;
-
-  [Header("Clock")]
-  public GameObject SpawnMeterHolder;
 
   [Header("TMP_Text")]
   public TMP_Text ScoreText;
@@ -56,9 +52,6 @@ public class Main : MonoBehaviour
   public TMP_Text ActiveTouches;
   public TMP_Text ActiveBubbles;
   public TMP_Text ActiveClicks;
-
-  [Header("Clock bar")]
-  public Image SpawnMeter;
 
   [Header("Star shatter cue")]
   public Image ShatterEffect;
@@ -185,7 +178,6 @@ public class Main : MonoBehaviour
     TitleText.SetActive(false);
     BtnInfo.SetActive(false);
     BtnHighScores.SetActive(false);
-    //SpawnMeterHolder.SetActive(true);
     SpawnMeterSlider.gameObject.SetActive(true);
     EvilStar.gameObject.SetActive(true);
     TheWorldHolder.gameObject.SetActive(true);
@@ -319,7 +311,6 @@ public class Main : MonoBehaviour
       }
 
       _isGameOver = true;
-      ClockAnimator.enabled = false;
       StartCoroutine(GameOverScreenSlideRoutine());
       SoundManager.Instance.PlaySound("game-over", 0.5f, 1.0f, false);
       AppConfig.AddHighscore(_score);
@@ -358,8 +349,6 @@ public class Main : MonoBehaviour
     _spawnRateNormalized = GetNormalizedValue(_spawnTimeout,
                                                Constants.SpawnTimeoutMax,
                                                Constants.SpawnTimeoutInit);
-
-    SpawnMeter.fillAmount = 1.0f - _spawnRateNormalized;
 
     SpawnMeterSlider.value = 1.0f - _spawnRateNormalized;
 
@@ -409,7 +398,7 @@ public class Main : MonoBehaviour
     Input.backButtonLeavesApp = true;
     Application.targetFrameRate = 90;
 
-    _spawnY = Camera.main.orthographicSize + 2.0f;
+    _spawnY = Camera.main.orthographicSize + 1.0f;
 
     float aspect = (float)Screen.width / (float)Screen.height;
     float hBorder = Camera.main.orthographicSize * aspect;
@@ -604,7 +593,7 @@ public class Main : MonoBehaviour
     float heartChance = (float)Constants.HeartStarMaxChance * mult;
     float roll = Random.Range(0, 100);
 
-    // Debug.Log(string.Format("roll = {0} chance = {1}", roll, heartChance));
+    //Debug.Log(string.Format("roll = {0} chance = {1}", roll, heartChance));
 
     bool shouldSpawnHeart = ((_iterations % Constants.HeartSpawnCheckAfterIterations == 0)
                             && !_heartWasSpawned
@@ -738,9 +727,6 @@ public class Main : MonoBehaviour
   {
     _clockRewinding = true;
 
-    //ClockAnimator.Play("clock-reverse");
-
-    //float currentMeter = SpawnMeter.fillAmount;
     float currentMeter = SpawnMeterSlider.value;
 
     CalculateTimeGracePeriod();
@@ -750,13 +736,10 @@ public class Main : MonoBehaviour
       currentMeter -= Time.unscaledDeltaTime * 0.125f;
       currentMeter = Mathf.Clamp(currentMeter, 0.0f, 1.0f);
 
-      //SpawnMeter.fillAmount = currentMeter;
       SpawnMeterSlider.value = currentMeter;
 
       yield return null;
     }
-
-    //ClockAnimator.Play("clock");
 
     _clockRewinding = false;
 
@@ -944,8 +927,6 @@ public class Main : MonoBehaviour
   {
     float guiCounter = (float)Constants.StoppedTimeDuration;
 
-    //StoppedTimeLeftText.text = string.Format("{0:F2}", guiCounter);
-
     TimeStopLeftHolder.gameObject.SetActive(true);
 
     float secondPassed = 0.0f;
@@ -966,10 +947,7 @@ public class Main : MonoBehaviour
       TimeStopClockIcon.fillAmount = radialFillValue;
 
       guiCounter -= Time.unscaledDeltaTime;
-
       guiCounter = Mathf.Clamp(guiCounter, 0.0f, (float)Constants.StoppedTimeDuration);
-
-      //StoppedTimeLeftText.text = string.Format("{0}", Constants.StoppedTimeDuration - secondsPassed);
 
       yield return null;
     }
@@ -1114,7 +1092,6 @@ public class Main : MonoBehaviour
 #if UNITY_EDITOR
     if (Input.GetKeyDown(KeyCode.Space))
     {
-      //SpawnTrollStars();
       TrollPrefab.TrollPlayer(0.0f);
     }
 
@@ -1147,7 +1124,6 @@ public class Main : MonoBehaviour
                                                  Constants.SpawnTimeoutMax,
                                                  Constants.SpawnTimeoutInit);
 
-      SpawnMeter.fillAmount = 1.0f - _spawnRateNormalized;
       SpawnMeterSlider.value = 1.0f - _spawnRateNormalized;
     }
 

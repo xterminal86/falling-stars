@@ -36,7 +36,7 @@ public class ObjectsPool : MonoBehaviour
   {
     _holder = GetComponent<Transform>();
 
-        for (int i = 0; i < PoolSize; i++)
+    for (int i = 0; i < PoolSize; i++)
     {
       GameObject obj = Instantiate(Prefab,
                                    Vector3.zero,
@@ -79,8 +79,7 @@ public class ObjectsPool : MonoBehaviour
     {
       _activeObjectsById[objectId].SetActive(false);
 
-      IPoolObject po = _activeObjectsById[objectId].GetComponent<IPoolObject>();
-      po.ResetState();
+      _activeObjectsById[objectId].GetComponent<IPoolObject>()?.ResetState();
 
       _pool.Enqueue(_activeObjectsById[objectId]);
       _activeObjectsById.Remove(objectId);

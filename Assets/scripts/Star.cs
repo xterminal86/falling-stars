@@ -42,6 +42,9 @@ public class Star : MonoBehaviour, IPoolObject
 
   public void Prepare()
   {
+    _spriteRenderer.enabled = true;
+    _collider.enabled = true;
+
     Shine.Play();
     Trail.Play();
   }
@@ -53,15 +56,14 @@ public class Star : MonoBehaviour, IPoolObject
   {
     _resetPosition.y = _mainRef.SpawnY;
     _innerObjectPos = _resetPosition;
-    transform.position = _resetPosition;
     InnerObject.localPosition = Vector3.zero;
     InnerObject.localScale = Vector3.one;
+    transform.position = _resetPosition;
     _exploded = false;
     _starCaught = false;
-    _spriteRenderer.enabled = true;
-    _collider.enabled = true;
     _speed = 0.0f;
     _angleSpeed = 0.0f;
+    _angleF = 0.0f;
     ColliderComponent.radius = 0.75f;
   }
 
@@ -124,13 +126,10 @@ public class Star : MonoBehaviour, IPoolObject
     switch(_starTrajectory)
     {
       case StarTrajectory.WAVE:
-        //_wobbleSpeed = Random.Range(1, 6);
         _waveWidth = Random.Range(1.0f, 2.0f);
         break;
 
       case StarTrajectory.CIRCLE:
-        //_rotationSpeed = Random.Range(2, 7);
-        //_radius = Random.Range(0.25f, 1.0f);
         _radius = Random.Range(0.5f, 2.0f);
         break;
 
@@ -151,13 +150,11 @@ public class Star : MonoBehaviour, IPoolObject
     {
       case StarTrajectory.WAVE:
         int ww = Mathf.RoundToInt(_waveWidth);
-        //_additionalScore = (_wobbleSpeed + ww);
         _additionalScore = ww;
         break;
 
       case StarTrajectory.CIRCLE:
         int r = Mathf.RoundToInt(_radius);
-        //_additionalScore = (_rotationSpeed + r);
         _additionalScore = (r < 1) ? 1 : r;
         break;
 
@@ -239,8 +236,6 @@ public class Star : MonoBehaviour, IPoolObject
         break;
     }
 
-    //_spriteRenderer.color = _color;
-
     AdjustParticleSystemColor(Shine);
     AdjustParticleSystemColor(Trail);
   }
@@ -316,8 +311,6 @@ public class Star : MonoBehaviour, IPoolObject
         }
         else
         {
-          //float pitch = 1.0f * Constants.StarSpeedScaleByType[_starType];
-          //float volume = 0.4f * (pitch * 0.25f);
           SoundManager.Instance.PlaySound("star-break", 0.3f, 1.0f);
         }
 
@@ -361,20 +354,15 @@ public class Star : MonoBehaviour, IPoolObject
 
   float _angleIncreaseScale = 200.0f;
 
-  //int _angle = 0;
   float _angleF = 0.0f;
 
   float _sinResult = 0.0f;
   float _cosResult = 0.0f;
 
-  //int _rotationSpeed = 4;
   float _radius = 3.0f;
   void AddCircle()
   {
     _innerObjectPos = InnerObject.localPosition;
-
-    //_sinResult = Mathf.Sin(_angle * Mathf.Deg2Rad);
-    //_cosResult = Mathf.Cos(_angle * Mathf.Deg2Rad);
 
     _sinResult = Mathf.Sin(_angleF * Mathf.Deg2Rad);
     _cosResult = Mathf.Cos(_angleF * Mathf.Deg2Rad);
@@ -386,9 +374,6 @@ public class Star : MonoBehaviour, IPoolObject
       _angleF -= 360.0f;
     }
 
-    //_angle += _rotationSpeed;
-    //_angle %= 360;
-
     _innerObjectPos.x = (_sinResult * _radius);
     _innerObjectPos.y = (_cosResult * _radius);
 
@@ -398,12 +383,10 @@ public class Star : MonoBehaviour, IPoolObject
   // ===========================================================================
 
   float _waveWidth = 1.0f;
-  //int _wobbleSpeed = 10;
   void AddWave()
   {
     _innerObjectPos = InnerObject.localPosition;
 
-    //_sinResult = Mathf.Sin(_angle * Mathf.Deg2Rad);
     _sinResult = Mathf.Sin(_angleF * Mathf.Deg2Rad);
 
     _angleF += Time.smoothDeltaTime * _angleIncreaseScale;
@@ -412,9 +395,6 @@ public class Star : MonoBehaviour, IPoolObject
     {
       _angleF -= 360.0f;
     }
-
-    //_angle += _wobbleSpeed;
-    //_angle %= 360;
 
     _innerObjectPos.x = (_sinResult * _waveWidth);
 
