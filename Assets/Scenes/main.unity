@@ -3613,7 +3613,7 @@ MonoBehaviour:
   LowPassFilter: {fileID: 519420034}
   Clouds: {fileID: 770312831}
   ImageBubbleSprite: {fileID: 21300000, guid: f94c211347f0bd847bf67c47a4499c7b, type: 3}
-  GodMode: 0
+  GodMode: 1
 --- !u!4 &399671086
 Transform:
   m_ObjectHideFlags: 0
@@ -18880,5 +18880,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dcbaa9495406987ab3c8232e42df14e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PoolSize: 20
+  PoolSize: 30
   Prefab: {fileID: 9007235039479270865, guid: 4bc1f91cf397f1b49b1307a90ce300d5, type: 3}
