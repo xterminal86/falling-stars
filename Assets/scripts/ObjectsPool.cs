@@ -86,9 +86,16 @@ public class ObjectsPool : MonoBehaviour
     }
   }
 
-  IEnumerator DeactivateRoutine(GameObject obj, float seconds)
+  IEnumerator DeactivateRoutine(GameObject obj, float seconds, bool realtime)
   {
-    yield return new WaitForSeconds(seconds);
+    if (realtime)
+    {
+      yield return new WaitForSecondsRealtime(seconds);
+    }
+    else
+    {
+      yield return new WaitForSeconds(seconds);
+    }
 
     Return(obj);
 
@@ -96,8 +103,9 @@ public class ObjectsPool : MonoBehaviour
   }
 
   public void Return(GameObject objectToReturn,
-                     float deactivateAfterSeconds)
+                     float deactivateAfterSeconds,
+                     bool realtime = false)
   {
-    StartCoroutine(DeactivateRoutine(objectToReturn, deactivateAfterSeconds));
+    StartCoroutine(DeactivateRoutine(objectToReturn, deactivateAfterSeconds, realtime));
   }
 }

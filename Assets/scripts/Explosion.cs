@@ -27,6 +27,6 @@ public class Explosion : MonoBehaviour
 
     SpriteRenderer_.color = c;
 
-    _mainRef.ExplosionsPool.Return(gameObject, 3.0f);
+    _mainRef.ExplosionsPool.Return(gameObject, 3.0f, true);
   }
 }

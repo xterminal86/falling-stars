@@ -760,7 +760,7 @@ public class Main : MonoBehaviour
     GameObject go = MouseClickEffectPool.Acquire(at);
     if (go != null)
     {
-      MouseClickEffectPool.Return(go, 1.0f);
+      MouseClickEffectPool.Return(go, 1.0f, true);
     }
   }
 
@@ -898,7 +898,7 @@ public class Main : MonoBehaviour
         GameObject go = TouchesPool.Acquire(wp);
         if (go != null)
         {
-          TouchesPool.Return(go, 1.0f);
+          TouchesPool.Return(go, 1.0f, true);
         }
       }
     }
